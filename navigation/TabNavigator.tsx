@@ -25,96 +25,67 @@ const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
-  tabBarStyle: styles.tabBar,
-  tabBarItemStyle: styles.tabBarItem,
-  tabBarActiveTintColor: COLORS.primary,
-  tabBarInactiveTintColor: '#6B7280',
-  tabBarHideOnKeyboard: true,
+        tabBarShowLabel: true,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarHideOnKeyboard: true,
+        tabBarLabelStyle: styles.label,
+        tabBarBackground: () => <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />,
       }}
     >
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.iconWithLabel}>
-              <Ionicons name="home-outline" color={focused ? COLORS.primary : '#6B7280'} size={24} />
-              <Text
-                style={[styles.label, focused && { color: COLORS.primary }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                allowFontScaling={false}
-              >
-                Dashboard
-              </Text>
-            </View>
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name="home-outline" color={color} size={24} />
           ),
+          tabBarLabel: 'Dashboard',
         }}
       />
       <Tab.Screen
         name="Mapping"
         component={LiveTrackingScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.iconWithLabel}>
-              <Ionicons name="map-outline" color={focused ? COLORS.primary : '#6B7280'} size={24} />
-              <Text
-                style={[styles.label, focused && { color: COLORS.primary }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                allowFontScaling={false}
-              >
-                Mapping
-              </Text>
-            </View>
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name="map-outline" color={color} size={24} />
           ),
+          tabBarLabel: 'Map',
         }}
       />
       <Tab.Screen
         name="Sos"
         component={SosAlertScreen}
         options={{
-          tabBarIcon: () => <Text style={styles.sosText}>SOS</Text>,
+          tabBarIcon: () => (
+            <View style={styles.sosIconContainer}>
+              <Ionicons name="warning" color="#FFFFFF" size={20} />
+              <Text style={styles.sosText}>SOS</Text>
+            </View>
+          ),
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
+          tabBarLabel: '',
         }}
       />
       <Tab.Screen
         name="Analytics"
         component={RideStatsScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.iconWithLabel}>
-              <Ionicons name="stats-chart" color={focused ? COLORS.primary : '#6B7280'} size={24} />
-              <Text
-                style={[styles.label, focused && { color: COLORS.primary }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                allowFontScaling={false}
-              >
-                Analytics
-              </Text>
-            </View>
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name="stats-chart" color={color} size={24} />
           ),
+          tabBarLabel: 'Analytics',
         }}
       />
       <Tab.Screen
         name="Profile"
         component={SettingsScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.iconWithLabel}>
-              <Ionicons name="person-outline" color={focused ? COLORS.primary : '#6B7280'} size={24} />
-              <Text
-                style={[styles.label, focused && { color: COLORS.primary }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                allowFontScaling={false}
-              >
-                Profile
-              </Text>
-            </View>
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name="person-outline" color={color} size={24} />
           ),
+          tabBarLabel: 'Profile',
         }}
       />
     </Tab.Navigator>
@@ -124,64 +95,56 @@ const TabNavigator = () => {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 18,
-    left: 16,
-    right: 16,
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    height: 72,
+    height: 90,
+    paddingHorizontal: 8,
+    paddingBottom: 25,
+    paddingTop: 8,
     borderTopWidth: 0,
-    overflow: 'visible',
-    zIndex: 10,
-    paddingHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  tabBarItem: {
-    paddingVertical: 8,
-  },
-  iconWithLabel: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   label: {
-  marginTop: 2,
-  fontSize: 10,
-    color: '#6B7280',
+    fontSize: 12,
+    color: '#9CA3AF',
     textAlign: 'center',
-    flexShrink: 0,
-  lineHeight: 12,
+    lineHeight: 14,
     // @ts-ignore Android only
     includeFontPadding: false,
   },
   sosButtonWrapper: {
-    top: -28,
+    top: -15,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
   },
   sosButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#e32f45',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FF6B47',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  sosIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sosText: {
     color: '#FFFFFF',
-  fontSize: 14,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
+    marginTop: 2,
   },
 });
 
