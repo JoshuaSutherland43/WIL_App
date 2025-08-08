@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
-import AuthNavigator from './navigation/AuthNavigator';
+// IMPORTANT: Lazily import AuthNavigator to avoid initializing Firebase during app boot
+const AuthNavigator = React.lazy(() => import('./navigation/AuthNavigator'));
 
 export default function App() {
   // ASK CALEB TO ADD THE LOGIN AUTHENTICATION LOGIC LATER
@@ -11,7 +12,13 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      {isLoggedIn ? <AppNavigator /> : <AuthNavigator />}
+      {isLoggedIn ? (
+        <AppNavigator />
+      ) : (
+        <Suspense fallback={null}>
+          <AuthNavigator />
+        </Suspense>
+      )}
     </NavigationContainer>
   );
 }

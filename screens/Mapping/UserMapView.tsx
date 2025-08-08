@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import MapView, { PROVIDER_DEFAULT } from 'react-native-maps';
+import { DEFAULT_REGION } from '../../services/MapsService';
 
 /**
  * 
@@ -15,10 +17,17 @@ import { Ionicons } from '@expo/vector-icons';
 const UserMapView: React.FC = () => {
 	return (
 		<View style={styles.root}>
-					{/* Map canvas placeholder (replace with MapView later) */}
-					<View style={styles.map}>
-						<Text style={styles.mapPlaceholderText}>Map will go here in the future</Text>
-					</View>
+					{/* Fullscreen Map */}
+					<MapView
+						style={StyleSheet.absoluteFillObject}
+						provider={PROVIDER_DEFAULT}
+						initialRegion={DEFAULT_REGION}
+						showsUserLocation
+						showsMyLocationButton
+						showsCompass
+					>
+						{/* Future: Polyline(s) will be added here */}
+					</MapView>
 
 			{/* Top overlay */}
 			<View style={styles.topBar}>
@@ -54,20 +63,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#0f0f10',
 	},
-	map: {
-		position: 'absolute',
-		top: 0,
-		right: 0,
-		bottom: 0,
-		left: 0,
-		backgroundColor: '#121417',
-			alignItems: 'center',
-			justifyContent: 'center',
-	},
-		mapPlaceholderText: {
-			color: '#9AA0A6',
-			fontSize: 14,
-		},
+
 	topBar: {
 		position: 'absolute',
 		top: 12,
