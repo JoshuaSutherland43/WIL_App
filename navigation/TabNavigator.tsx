@@ -15,25 +15,8 @@ import { COLORS } from '../constants/colors';
 const Tab = createBottomTabNavigator();
 
 const CustomTabBarButton = ({ children, onPress }: { children: ReactNode; onPress?: (e: any) => void }) => (
-  <TouchableOpacity
-    style={{
-      top: -30,
-      justifyContent: 'center',
-      alignItems: 'center',
-      ...styles.shadow,
-    }}
-    onPress={onPress}
-  >
-    <View
-      style={{
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: '#e32f45',
-      }}
-    >
-      {children}
-    </View>
+  <TouchableOpacity style={styles.sosButtonWrapper} onPress={onPress} activeOpacity={0.9}>
+    <View style={styles.sosButton}>{children}</View>
   </TouchableOpacity>
 );
 
@@ -41,18 +24,13 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={{
+        headerShown: false,
         tabBarShowLabel: false,
-      tabBarStyle: {
-        position: 'absolute',
-        bottom: 25,
-        left: 20,
-        right: 20,
-        backgroundColor: '#ffffff',
-        borderRadius: 15,
-        height: 90,
-        ...styles.shadow,
-        elevation: 0,
-      },
+  tabBarStyle: styles.tabBar,
+  tabBarItemStyle: styles.tabBarItem,
+  tabBarActiveTintColor: COLORS.primary,
+  tabBarInactiveTintColor: '#6B7280',
+  tabBarHideOnKeyboard: true,
       }}
     >
       <Tab.Screen
@@ -60,9 +38,16 @@ const TabNavigator = () => {
         component={DashboardScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="home" color={focused ? COLORS.primary : '#748c94'} size={24} />
-              <Text style={{ color: focused ? COLORS.primary : '#748c94', fontSize: 12 }}>DASHBOARD</Text>
+            <View style={styles.iconWithLabel}>
+              <Ionicons name="home-outline" color={focused ? COLORS.primary : '#6B7280'} size={24} />
+              <Text
+                style={[styles.label, focused && { color: COLORS.primary }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                allowFontScaling={false}
+              >
+                Dashboard
+              </Text>
             </View>
           ),
         }}
@@ -72,9 +57,16 @@ const TabNavigator = () => {
         component={LiveTrackingScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="map" color={focused ? COLORS.primary : '#748c94'} size={24} />
-              <Text style={{ color: focused ? COLORS.primary : '#748c94', fontSize: 12 }}>MAPPING</Text>
+            <View style={styles.iconWithLabel}>
+              <Ionicons name="map-outline" color={focused ? COLORS.primary : '#6B7280'} size={24} />
+              <Text
+                style={[styles.label, focused && { color: COLORS.primary }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                allowFontScaling={false}
+              >
+                Mapping
+              </Text>
             </View>
           ),
         }}
@@ -83,9 +75,7 @@ const TabNavigator = () => {
         name="Sos"
         component={SosAlertScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons name="alert-circle" color={COLORS.white} size={48} />
-          ),
+          tabBarIcon: () => <Text style={styles.sosText}>SOS</Text>,
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
         }}
       />
@@ -94,9 +84,16 @@ const TabNavigator = () => {
         component={RideStatsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="stats-chart" color={focused ? COLORS.primary : '#748c94'} size={24} />
-              <Text style={{ color: focused ? COLORS.primary : '#748c94', fontSize: 12 }}>ANALYTICS</Text>
+            <View style={styles.iconWithLabel}>
+              <Ionicons name="stats-chart" color={focused ? COLORS.primary : '#6B7280'} size={24} />
+              <Text
+                style={[styles.label, focused && { color: COLORS.primary }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                allowFontScaling={false}
+              >
+                Analytics
+              </Text>
             </View>
           ),
         }}
@@ -106,9 +103,16 @@ const TabNavigator = () => {
         component={SettingsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="person" color={focused ? COLORS.primary : '#748c94'} size={24} />
-              <Text style={{ color: focused ? COLORS.primary : '#748c94', fontSize: 12 }}>PROFILE</Text>
+            <View style={styles.iconWithLabel}>
+              <Ionicons name="person-outline" color={focused ? COLORS.primary : '#6B7280'} size={24} />
+              <Text
+                style={[styles.label, focused && { color: COLORS.primary }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                allowFontScaling={false}
+              >
+                Profile
+              </Text>
             </View>
           ),
         }}
@@ -118,15 +122,66 @@ const TabNavigator = () => {
 };
 
 const styles = StyleSheet.create({
-  shadow: {
-    shadowColor: '#7F5DF0',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
+  tabBar: {
+    position: 'absolute',
+    bottom: 18,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    height: 72,
+    borderTopWidth: 0,
+    overflow: 'visible',
+    zIndex: 10,
+    paddingHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  tabBarItem: {
+    paddingVertical: 8,
+  },
+  iconWithLabel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+  marginTop: 2,
+  fontSize: 10,
+    color: '#6B7280',
+    textAlign: 'center',
+    flexShrink: 0,
+  lineHeight: 12,
+    // @ts-ignore Android only
+    includeFontPadding: false,
+  },
+  sosButtonWrapper: {
+    top: -28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  sosButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#e32f45',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 14,
+  },
+  sosText: {
+    color: '#FFFFFF',
+  fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });
 

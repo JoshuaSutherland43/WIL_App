@@ -1,20 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import UserMapView from './UserMapView';
 
 const LiveTrackingScreen = () => {
-  return (
-    <View style={styles.container}>
-      <Text>Live Tracking Screen</Text>
-    </View>
-  );
+  return <UserMapView />;
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    }
-})
 
 export default LiveTrackingScreen;
