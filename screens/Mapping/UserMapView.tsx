@@ -3,6 +3,10 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 /**
+ * 
+ * 
+ * 
+ * 
  * UI-only Map View
  * - Dark map canvas (placeholder View)
  * - Top overlay actions (settings, notifications with dot)

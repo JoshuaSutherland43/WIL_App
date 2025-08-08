@@ -1,6 +1,8 @@
 import React, { ReactNode } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+
+//Icons import
 import { Ionicons } from '@expo/vector-icons';
 
 // Screens
