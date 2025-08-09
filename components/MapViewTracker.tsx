@@ -4,6 +4,10 @@ import * as Location from 'expo-location';
 import type { RidePoint } from '../hooks/useRideTracker';
 import { primaryPreviewRoutes } from '../constants/trails';
 
+// Renders the main MapView with three responsibilities:
+// 1) Draw static preview routes (A–C).
+// 2) Draw the rider's live path as a polyline.
+// 3) Keep a tight, 3D, forward-facing camera follow on the latest point.
 type Props = { path: RidePoint[] | undefined };
 
 // Fallback large region so the map renders immediately while we resolve a more precise region.
@@ -19,7 +23,8 @@ export default function MapViewTracker({ path }: Props) {
   const mapRef = useRef<MapView | null>(null);
   const [heading, setHeading] = useState<number>(0);
 
-  // Keep camera focused on the most recent point when tracking
+  // When the path grows, recenter on the most recent point with a tight delta
+  // (gives a max-zoomed-in feel so nearby objects are visible).
   useEffect(() => {
     if (path && path.length > 0) {
       const last = path[path.length - 1];
@@ -39,13 +44,16 @@ export default function MapViewTracker({ path }: Props) {
       setRegion({
         latitude: last.latitude,
         longitude: last.longitude,
-        latitudeDelta: 0.0035,
-        longitudeDelta: 0.0035,
+        latitudeDelta: 0.002,
+        longitudeDelta: 0.002,
       });
     }
   }, [path?.length]);
 
-  // Animate camera to add a 3D pitched look when we have a region
+  // Animate the camera whenever the region updates to create a 3D nearby-objects look:
+  // - high pitch (55º)
+  // - high zoom (~18.5)
+  // - heading in the direction of travel
   useEffect(() => {
     if (!region || !mapRef.current) return;
     try {
@@ -55,7 +63,7 @@ export default function MapViewTracker({ path }: Props) {
           center: { latitude: region.latitude, longitude: region.longitude },
           pitch: 55,
           heading,
-          zoom: 17,
+          zoom: 18.5,
           altitude: undefined,
         },
         { duration: 600 }
@@ -65,11 +73,12 @@ export default function MapViewTracker({ path }: Props) {
     }
   }, [region?.latitude, region?.longitude, heading]);
 
-  // If no path yet, acquire current location once for initial region.
+  // If no path yet, acquire current location once for initial region (tight delta)
+  // so the user starts fully zoomed into their nearby area.
   useEffect(() => {
     let cancelled = false;
-    async function init() {
-      if (path && path.length > 0) return; // already handled above
+    (async () => {
+      if (region) return;
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') return; // Silent fail; map will show world view.
@@ -78,19 +87,16 @@ export default function MapViewTracker({ path }: Props) {
           setRegion({
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
-            latitudeDelta: 0.004,
-            longitudeDelta: 0.004,
+            latitudeDelta: 0.0015,
+            longitudeDelta: 0.0015,
           });
         }
-      } catch (e) {
-        // Ignore – we'll just show world map.
-      }
-    }
-    init();
+      } catch {}
+    })();
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [region]);
 
   const start = path && path[0];
   const end = path && path[path.length - 1];
@@ -99,12 +105,15 @@ export default function MapViewTracker({ path }: Props) {
     <MapView
       style={{ flex: 1 }}
       provider={PROVIDER_DEFAULT}
+      // Hybrid map type shows roads + satellite for a more detailed view
+      mapType="hybrid"
       initialRegion={region || WORLD_REGION}
       region={region || undefined}
       showsUserLocation
       showsMyLocationButton
       showsCompass
       followsUserLocation
+      // Show buildings and POIs to reinforce the "3D nearby objects" feel
       showsBuildings
       showsIndoors
       showsPointsOfInterest
