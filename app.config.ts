@@ -5,6 +5,12 @@ import type { ExpoConfig } from 'expo/config';
 // Expected vars in .env:
 //   GOOGLE_MAPS_API_KEY=<your-android-key>
 //   IOS_GOOGLE_MAPS_API_KEY=<your-ios-key>
+//   FIREBASE_API_KEY=...
+//   FIREBASE_AUTH_DOMAIN=...
+//   FIREBASE_PROJECT_ID=...
+//   FIREBASE_STORAGE_BUCKET=...
+//   FIREBASE_MESSAGING_SENDER_ID=...
+//   FIREBASE_APP_ID=...
 
 const androidMapsApiKey = process.env.GOOGLE_MAPS_API_KEY ?? '';
 const iosMapsApiKey = process.env.IOS_GOOGLE_MAPS_API_KEY ?? process.env.GOOGLE_MAPS_API_KEY ?? '';
@@ -51,6 +57,15 @@ const config: ExpoConfig = {
   },
   web: {
     favicon: './assets/images/favicon.png',
+  },
+  extra: {
+    // Expose Firebase config to the app via Constants.expoConfig.extra
+    FIREBASE_API_KEY: process.env.FIREBASE_API_KEY ?? '',
+    FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN ?? '',
+    FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ?? '',
+    FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET ?? '',
+    FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID ?? '',
+    FIREBASE_APP_ID: process.env.FIREBASE_APP_ID ?? '',
   },
 };
 
