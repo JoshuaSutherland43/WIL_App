@@ -17,11 +17,25 @@ const WORLD_REGION: Region = {
 export default function MapViewTracker({ path }: Props) {
   const [region, setRegion] = useState<Region | null>(null);
   const mapRef = useRef<MapView | null>(null);
+  const [heading, setHeading] = useState<number>(0);
 
   // Keep camera focused on the most recent point when tracking
   useEffect(() => {
     if (path && path.length > 0) {
       const last = path[path.length - 1];
+      if (path.length > 1) {
+        const prev = path[path.length - 2];
+        // compute bearing in degrees 0..360
+        const toRad = (v: number) => (v * Math.PI) / 180;
+        const toDeg = (v: number) => (v * 180) / Math.PI;
+        const dLon = toRad(last.longitude - prev.longitude);
+        const lat1 = toRad(prev.latitude);
+        const lat2 = toRad(last.latitude);
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        const brng = (toDeg(Math.atan2(y, x)) + 360) % 360;
+        setHeading(brng);
+      }
       setRegion({
         latitude: last.latitude,
         longitude: last.longitude,
@@ -40,7 +54,7 @@ export default function MapViewTracker({ path }: Props) {
         {
           center: { latitude: region.latitude, longitude: region.longitude },
           pitch: 55,
-          heading: 0,
+          heading,
           zoom: 17,
           altitude: undefined,
         },
@@ -49,7 +63,7 @@ export default function MapViewTracker({ path }: Props) {
     } catch (_e) {
       // no-op; animateCamera may not be supported on some providers
     }
-  }, [region?.latitude, region?.longitude]);
+  }, [region?.latitude, region?.longitude, heading]);
 
   // If no path yet, acquire current location once for initial region.
   useEffect(() => {

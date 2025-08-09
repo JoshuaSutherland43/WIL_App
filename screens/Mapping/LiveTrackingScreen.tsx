@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     position: 'absolute',
-    bottom: Platform.select({ ios: 210, android: 190, default: 190 }),
+    bottom: Platform.select({ ios: 260, android: 230, default: 230 }),
     left: 0,
     right: 0,
     paddingVertical: 10,
@@ -133,11 +133,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 180,
+    height: 220,
   },
   footer: {
     position: 'absolute',
-    bottom: Platform.select({ ios: 120, android: 110, default: 110 }),
+    bottom: Platform.select({ ios: 160, android: 140, default: 140 }),
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   rideActiveContainer: {
     position: 'absolute',
-  bottom: Platform.select({ ios: 40, android: 30, default: 30 }),
+  bottom: Platform.select({ ios: 90, android: 70, default: 70 }),
     left: 0,
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
