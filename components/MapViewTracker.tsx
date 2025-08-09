@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { RidePoint } from '../hooks/useRideTracker';
@@ -16,19 +16,40 @@ const WORLD_REGION: Region = {
 
 export default function MapViewTracker({ path }: Props) {
   const [region, setRegion] = useState<Region | null>(null);
+  const mapRef = useRef<MapView | null>(null);
 
-  // Derive region from path if we have points.
+  // Keep camera focused on the most recent point when tracking
   useEffect(() => {
     if (path && path.length > 0) {
-      const start = path[0];
+      const last = path[path.length - 1];
       setRegion({
-        latitude: start.latitude,
-        longitude: start.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
+        latitude: last.latitude,
+        longitude: last.longitude,
+        latitudeDelta: 0.0035,
+        longitudeDelta: 0.0035,
       });
     }
-  }, [path]);
+  }, [path?.length]);
+
+  // Animate camera to add a 3D pitched look when we have a region
+  useEffect(() => {
+    if (!region || !mapRef.current) return;
+    try {
+      // Zoom ~17 gives a street-level view on Google; pitch adds 3D perspective
+      mapRef.current.animateCamera(
+        {
+          center: { latitude: region.latitude, longitude: region.longitude },
+          pitch: 55,
+          heading: 0,
+          zoom: 17,
+          altitude: undefined,
+        },
+        { duration: 600 }
+      );
+    } catch (_e) {
+      // no-op; animateCamera may not be supported on some providers
+    }
+  }, [region?.latitude, region?.longitude]);
 
   // If no path yet, acquire current location once for initial region.
   useEffect(() => {
@@ -43,8 +64,8 @@ export default function MapViewTracker({ path }: Props) {
           setRegion({
             latitude: loc.coords.latitude,
             longitude: loc.coords.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitudeDelta: 0.004,
+            longitudeDelta: 0.004,
           });
         }
       } catch (e) {
@@ -69,6 +90,11 @@ export default function MapViewTracker({ path }: Props) {
       showsUserLocation
       showsMyLocationButton
       showsCompass
+      followsUserLocation
+      showsBuildings
+      showsIndoors
+      showsPointsOfInterest
+      ref={mapRef}
     >
       {/* Static preview routes (A-C) */}
       {primaryPreviewRoutes.map((route) => (

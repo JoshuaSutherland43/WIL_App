@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     position: 'absolute',
-    bottom: Platform.select({ ios: 190, android: 170, default: 170 }),
+    bottom: Platform.select({ ios: 210, android: 190, default: 190 }),
     left: 0,
     right: 0,
     paddingVertical: 10,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: Platform.select({ ios: 100, android: 90, default: 90 }),
+    bottom: Platform.select({ ios: 120, android: 110, default: 110 }),
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -154,10 +154,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   freeRideButton: {
-    backgroundColor: COLORS.primary,
+    // Figma: pink
+    backgroundColor: '#FF7DA4',
   },
   recentButton: {
-    backgroundColor: '#FFA500',
+    // Figma: amber
+    backgroundColor: '#F2B270',
   },
   buttonText: {
     color: '#fff',
