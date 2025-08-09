@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { RidePoint } from '../hooks/useRideTracker';
+import { primaryPreviewRoutes } from '../constants/trails';
 
 type Props = { path: RidePoint[] | undefined };
 
@@ -69,6 +70,15 @@ export default function MapViewTracker({ path }: Props) {
       showsMyLocationButton
       showsCompass
     >
+      {/* Static preview routes (A-C) */}
+      {primaryPreviewRoutes.map((route) => (
+        <Polyline
+          key={route.id}
+          coordinates={route.routeWaypoints.map((p) => ({ latitude: p.latitude, longitude: p.longitude }))}
+          strokeWidth={3}
+          strokeColor={route.color || '#FFFFFF'}
+        />
+      ))}
       {path && path.length > 0 && (
         <>
           <Polyline

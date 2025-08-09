@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import * as Location from 'expo-location';
 import type { LocationObject, LocationSubscription } from 'expo-location';
 import haversine from 'haversine';
+import { primaryPreviewRoutes } from '../constants/trails';
 
 export type RidePoint = {
   latitude: number;
@@ -16,6 +17,7 @@ export type RideData = {
   totalDistance: number; // meters
   elevationGain: number; // meters
   duration: number; // ms
+  routeDistances?: Record<string, number>; // meters per predefined route id
 };
 
 export default function useRideTracker() {
@@ -53,12 +55,38 @@ export default function useRideTracker() {
         }
         path.push(point);
 
-        setRideData({
-          startTime,
-          path: [...path],
-          totalDistance,
-          elevationGain,
-          duration: Date.now() - startTime,
+        // Compute overlap contribution for this newest segment
+        const segmentDistances: Record<string, number> = {};
+        if (path.length > 1) {
+          const segStart = path[path.length - 2];
+          const segEnd = point;
+          primaryPreviewRoutes.forEach((route) => {
+            // naive proximity check to any waypoint (threshold 25m)
+            const near = route.routeWaypoints.some((w) => {
+              const d1 = haversine(w, segStart, { unit: 'meter' });
+              const d2 = haversine(w, segEnd, { unit: 'meter' });
+              return d1 < 25 || d2 < 25;
+            });
+            if (near) {
+              const segDist = haversine(segStart, segEnd, { unit: 'meter' });
+              segmentDistances[route.id] = (segmentDistances[route.id] || 0) + segDist;
+            }
+          });
+        }
+
+        setRideData((prev) => {
+          const merged: Record<string, number> = { ...(prev?.routeDistances || {}) };
+          Object.entries(segmentDistances).forEach(([k, v]) => {
+            merged[k] = (merged[k] || 0) + v;
+          });
+          return {
+            startTime,
+            path: [...path],
+            totalDistance,
+            elevationGain,
+            duration: Date.now() - startTime,
+            routeDistances: merged,
+          };
         });
       }
     );
