@@ -5,6 +5,7 @@ const SosAlertScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
       <View style={styles.mainContent}>
         <Text style={styles.title}>Having an Emergency?</Text>
         <Text style={styles.subtitle}>
@@ -12,10 +13,18 @@ const SosAlertScreen = () => {
         </Text>
       </View>
 
-      {/* Bottom Navigation Placeholder */}
-      <View style={styles.bottomNav}>
-        {/* Navigation buttons to be added */}
+      <View style={styles.buttonContainer}>
+        <View style={styles.swipeContainer}>
+          <View style={styles.swipeTrack}>
+            <View style={styles.sosButton}>
+              <Text style={styles.sosText}>SOS</Text>
+            </View>
+          </View>
+          <Text style={styles.swipeInstruction}>Swipe the button up{'\n'}and hold.</Text>
+        </View>
       </View>
+
+      <View style={styles.bottomNav} />
     </View>
   );
 };
@@ -41,6 +50,55 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 40,
+  },
+  buttonContainer: {
+    paddingHorizontal: 40,
+    paddingBottom: 120,
+    alignItems: 'center',
+  },
+  swipeContainer: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  swipeTrack: {
+    width: 120,
+    height: 320,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 60,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 8,
+    borderWidth: 2,
+    borderColor: '#E8E8E8',
+    position: 'relative',
+  },
+  sosButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FF4757',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    position: 'absolute',
+    bottom: 8,
+  },
+  sosText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    letterSpacing: 1,
+  },
+  swipeInstruction: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 24,
+    lineHeight: 20,
   },
   bottomNav: {
     position: 'absolute',
