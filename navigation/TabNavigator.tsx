@@ -8,7 +8,7 @@ import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import LiveTrackingScreen from '../screens/Mapping/LiveTrackingScreen';
 import SosAlertScreen from '../screens/Sos/SosAlertScreen';
 import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
-import SettingsScreen from '../screens/Profile/SettingsScreen';
+import SettingsScreen from '../screens/Profile/ProfileScreen';
 
 import { COLORS } from '../constants/colors';
 
