@@ -12,10 +12,14 @@
     "@react-navigation/bottom-tabs": "^7.4.5",
     "@react-navigation/stack": "^7.4.5",
     "expo": "~53.0.20",
+    "expo-media-library": "^17.1.7",
+    "expo-sharing": "^13.1.5",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.5",
-    "react-native-vector-icons": "^10.3.0"
+    "react-native-gifted-charts": "^1.4.63",
+    "react-native-vector-icons": "^10.3.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -10,7 +10,7 @@ import SosAlertScreen from '../screens/Sos/SosAlertScreen';
 import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
 import SettingsScreen from '../screens/Profile/SettingsScreen';
 
-import { COLORS } from '../constants/colors';
+import { Colors } from '../constants/colors';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -29,7 +29,7 @@ const TabNavigator = () => {
         headerShown: false,
         tabBarShowLabel: true,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.primary,
+        tabBarActiveTintColor: Colors.light.primary,
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: styles.label,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import { COLORS } from '../../constants/colors';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, useColorScheme } from 'react-native';
+import { Colors } from '../../constants/colors';
 import AuthHeader from '../../components/Auth/AuthHeader';
 import AuthInput from '../../components/Auth/AuthInput';
 import AuthButton from '../../components/Auth/AuthButton';
@@ -11,18 +11,21 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.white }]}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <AuthHeader activeTab="Login" onTabPress={() => navigation.navigate('Register')} />
-        
+
         <AuthInput
           label="Your Email"
           value={email}
           onChangeText={setEmail}
           placeholder="help@gmail.com"
         />
-        
+
         <AuthInput
           label="Password"
           value={password}
@@ -34,27 +37,27 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
         />
 
         <View style={styles.forgotPasswordContainer}>
-            <Text style={styles.errorText}>Wrong password</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                <Text style={styles.link}>Forgot password?</Text>
-            </TouchableOpacity>
+          <Text style={[styles.errorText, { color: colors.error }]}>Wrong password</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+            <Text style={[styles.link, { color: colors.link }]}>Forgot password?</Text>
+          </TouchableOpacity>
         </View>
 
-        <AuthButton title="Continue" onPress={() => { /* Handle Login */ }} isPrimary={true} />
+        <AuthButton title="Continue" onPress={() => {}} isPrimary={true} />
 
         <View style={styles.orContainer}>
-          <View style={styles.line} />
-          <Text style={styles.orText}>Or</Text>
-          <View style={styles.line} />
+          <View style={[styles.line, { backgroundColor: colors.lightGrey }]} />
+          <Text style={[styles.orText, { color: colors.darkGrey }]}>Or</Text>
+          <View style={[styles.line, { backgroundColor: colors.lightGrey }]} />
         </View>
 
-        <SocialButton title="Login with Apple" iconName="logo-apple" onPress={() => { /* Handle Apple Login */ }} />
-        <SocialButton title="Login with Google" iconName="logo-google" onPress={() => { /* Handle Google Login */ }} />
+        <SocialButton title="Login with Apple" iconName="logo-apple" onPress={() => {}} />
+        <SocialButton title="Login with Google" iconName="logo-google" onPress={() => {}} />
 
         <View style={styles.bottomTextContainer}>
-          <Text style={styles.bottomText}>Don't have an account? </Text>
+          <Text style={[styles.bottomText, { color: colors.darkGrey }]}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Sign up</Text>
+            <Text style={[styles.link, { color: colors.link }]}>Sign up</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -65,7 +68,6 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
   },
   scrollContainer: {
     padding: 20,
@@ -77,11 +79,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: COLORS.error,
     fontSize: 14,
   },
   link: {
-    color: COLORS.link,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -93,20 +93,16 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.lightGray,
   },
   orText: {
     marginHorizontal: 10,
-    color: COLORS.darkGray,
   },
   bottomTextContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 20,
   },
-  bottomText: {
-    color: COLORS.darkGray,
-  },
+  bottomText: {},
 });
 
 export default LoginScreen;

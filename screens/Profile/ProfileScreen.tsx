@@ -1,15 +1,17 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
+
   return (
     <ScrollView style={styles.container} nestedScrollEnabled>
-
       {/* Top Icons */}
       <View style={styles.topIcons}>
         <TouchableOpacity>
-          <Icon name="settings" size={27}/>
+          <Icon name="settings" size={27} />
         </TouchableOpacity>
         <TouchableOpacity>
           <Icon name="bell" size={27} />
@@ -25,36 +27,30 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-
       {/* Stats Container */}
       <View style={styles.statsContainer}>
-        
-          {/* Stats Heading + View More */}
         <View style={styles.statsHeader}>
           <Text style={styles.statsTitle}>Stats</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("PersonalStatsScreen" as never)}>
             <Text style={styles.viewMoreText}>View More</Text>
           </TouchableOpacity>
         </View>
-       <View style={styles.statsRow}>
-        {[
-          { label: "Rides", value: "12", boxColor: "#FFE2E5", circleColor: "#FA5A7D", icon: "activity" },
-          { label: "Km", value: "98", boxColor: "#FFF4DE", circleColor: "#FF947A", icon: "map" },
-          { label: "Hours", value: "5", boxColor: "#DCFCE7", circleColor: "green", icon: "clock" },
-          { label: "Points", value: "250", boxColor: "#F3E8FF", circleColor: "#BF83FF", icon: "star" }
-        ].map((item, idx) => (
-          <View key={idx} style={[styles.statBox, { backgroundColor: item.boxColor }]}>
-            <Text style={styles.statLabel1}>{item.label}</Text>
-            <Text style={styles.statValue}>{item.value}</Text>
-
-            <View style={[styles.iconCircle, { backgroundColor: item.circleColor }]}>
-              <Icon name={item.icon} size={16} color="#fff" />
+        <View style={styles.statsRow}>
+          {[
+            { label: "Rides", value: "12", boxColor: "#FFE2E5", circleColor: "#FA5A7D", icon: "activity" },
+            { label: "Km", value: "98", boxColor: "#FFF4DE", circleColor: "#FF947A", icon: "map" },
+            { label: "Hours", value: "5", boxColor: "#DCFCE7", circleColor: "green", icon: "clock" },
+            { label: "Points", value: "250", boxColor: "#F3E8FF", circleColor: "#BF83FF", icon: "star" }
+          ].map((item, idx) => (
+            <View key={idx} style={[styles.statBox, { backgroundColor: item.boxColor }]}>
+              <Text style={styles.statLabel1}>{item.label}</Text>
+              <Text style={styles.statValue}>{item.value}</Text>
+              <View style={[styles.iconCircle, { backgroundColor: item.circleColor }]}>
+                <Icon name={item.icon} size={16} color="#fff" />
+              </View>
             </View>
-            
-          </View>
-        ))}
-      </View>
-
+          ))}
+        </View>
       </View>
 
       {/* Achievements Heading + View More */}
@@ -63,7 +59,7 @@ export default function ProfileScreen() {
           <Icon name="award" size={20} style={{ marginRight: 5 }} />
           <Text style={styles.achievementsTitle}>Achievements</Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("AchievementsScreen" as never)}>
           <Text style={styles.viewMoreText}>View More</Text>
         </TouchableOpacity>
       </View>
@@ -71,7 +67,6 @@ export default function ProfileScreen() {
       {/* Achievements Scroll */}
       <ScrollView
         horizontal
-        
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 4 }}
         nestedScrollEnabled
@@ -93,7 +88,6 @@ export default function ProfileScreen() {
           </View>
         ))}
       </ScrollView>
-      
 
       {/* History Section */}
       <View style={styles.historyContainer}>

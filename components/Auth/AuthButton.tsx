@@ -1,6 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { COLORS } from '../../constants/colors';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Colors } from '../../constants/colors'; // Make sure this is correct import
 
 type AuthButtonProps = {
   title: string;
@@ -9,13 +9,17 @@ type AuthButtonProps = {
 };
 
 const AuthButton = ({ title, onPress, isPrimary }: AuthButtonProps) => {
-  const buttonColor = isPrimary ? COLORS.primary : COLORS.primary_signup;
+  // If you want to support dark/light mode, you might get colors from a hook
+  // For now, assuming Colors.light for simplicity:
+  const buttonColor = isPrimary ? Colors.light.primary : Colors.light.primary_signup;
+  const textColor = Colors.light.white;
+
   return (
     <TouchableOpacity
       style={[styles.button, { backgroundColor: buttonColor }]}
       onPress={onPress}
     >
-      <Text style={styles.buttonText}>{title}</Text>
+      <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -30,7 +34,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   buttonText: {
-    color: COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
