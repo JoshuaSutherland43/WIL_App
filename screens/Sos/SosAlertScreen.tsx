@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,16 +13,84 @@ import { PanGestureHandler, State } from 'react-native-gesture-handler';
 const SosAlertScreen = () => {
   const translateY = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+
+  const startCountdown = () => {
+    setIsCountingDown(true);
+    setCountdown(10);
+    countdownInterval.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          // Countdown finished - emergency activated
+          if (countdownInterval.current) {
+            clearInterval(countdownInterval.current);
+          }
+          setIsCountingDown(false);
+          // Here you can add logic for when emergency is activated
+          console.log('Emergency activated!');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const stopCountdown = () => {
+    if (countdownInterval.current) {
+      clearInterval(countdownInterval.current);
+      countdownInterval.current = null;
+    }
+    setIsCountingDown(false);
+    setCountdown(10);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
+      }
+    };
+  }, []);
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationY: translateY } }],
-    {
+    { 
       useNativeDriver: true,
+      listener: (event: any) => {
+        const translationY = event.nativeEvent.translationY;
+        console.log('Translation Y:', translationY); // Debug log
+        
+        // Start countdown when button is swiped up significantly (threshold -50)
+        if (translationY < -50 && !isCountingDown) {
+          console.log('Starting countdown'); // Debug log
+          startCountdown();
+        }
+        // Stop countdown if button is released or moved back down
+        else if (translationY >= -50 && isCountingDown) {
+          console.log('Stopping countdown'); // Debug log
+          stopCountdown();
+        }
+      }
     }
   );
 
-  const onHandlerStateChange = (event: import('react-native-gesture-handler').PanGestureHandlerStateChangeEvent) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
+  const onHandlerStateChange = (event: any) => {
+    const { state, translationY } = event.nativeEvent;
+    console.log('State change:', state, 'TranslationY:', translationY); // Debug log
+    
+    if (state === State.ACTIVE) {
+      // During active gesture, check if we should start/stop countdown
+      const translationY = event.nativeEvent.translationY;
+      if (translationY < -50 && !isCountingDown) {
+        startCountdown();
+      } else if (translationY >= -50 && isCountingDown) {
+        stopCountdown();
+      }
+    } else if (event.nativeEvent.oldState === State.ACTIVE) {
+      // When gesture ends, stop countdown and reset button
+      stopCountdown();
       Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start();
       Animated.spring(translateY, { 
         toValue: 0, 
@@ -30,7 +98,7 @@ const SosAlertScreen = () => {
         tension: 80,
         friction: 6
       }).start();
-    } else if (event.nativeEvent.state === State.BEGAN) {
+    } else if (state === State.BEGAN) {
       Animated.spring(buttonScale, { toValue: 0.95, useNativeDriver: true }).start();
     }
   };
@@ -48,6 +116,32 @@ const SosAlertScreen = () => {
     ],
   };
 
+  const renderMainText = () => {
+    if (isCountingDown) {
+      return (
+        <>
+          <Text style={styles.title}>
+            Emergency Alert Activating
+          </Text>
+          <Text style={[styles.subtitle, styles.countdownText]}>
+            Hold button up to confirm{'\n'}Activating in {countdown} seconds...
+          </Text>
+        </>
+      );
+    }
+    
+    return (
+      <>
+        <Text style={styles.title}>
+          Having an Emergency?
+        </Text>
+        <Text style={styles.subtitle}>
+          Swipe the button up and hold.{'\n'}Help will arrive soon.
+        </Text>
+      </>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -56,29 +150,25 @@ const SosAlertScreen = () => {
       />
 
       <View style={styles.mainContent}>
-        <Text style={styles.title}>
-          Having an Emergency?
-        </Text>
-        <Text style={styles.subtitle}>
-          Swipe the button up and hold.{'\n'}Help will arrive soon.
-        </Text>
+        {renderMainText()}
       </View>
 
       <View style={styles.buttonContainer}>
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
+          shouldCancelWhenOutside={false}
         >
           <Animated.View style={styles.swipeContainer}>
             <View style={styles.swipeTrack}>
-              <Animated.View style={[styles.sosButton, animatedButtonStyle]}>
+              <Animated.View style={[styles.sosButton, animatedButtonStyle, isCountingDown && styles.sosButtonActive]}>
                 <Text style={styles.sosText}>
-                  SOS
+                  {isCountingDown ? countdown : 'SOS'}
                 </Text>
               </Animated.View>
             </View>
             <Text style={styles.swipeInstruction}>
-              Swipe the button up{'\n'}and hold.
+              {isCountingDown ? 'Keep holding...' : 'Swipe the button up\nand hold.'}
             </Text>
           </Animated.View>
         </PanGestureHandler>
@@ -143,6 +233,10 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 40,
   },
+  countdownText: {
+    color: '#FF4757',
+    fontWeight: '600',
+  },
 
   buttonContainer: {
     paddingHorizontal: 40,
@@ -182,6 +276,9 @@ const styles = StyleSheet.create({
     elevation: 8,
     position: 'absolute',
     bottom: 8,
+  },
+  sosButtonActive: {
+    backgroundColor: '#FF1744',
   },
   sosText: {
     fontSize: 20,
