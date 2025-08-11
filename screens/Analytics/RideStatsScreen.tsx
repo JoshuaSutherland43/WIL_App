@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { getRides } from '../../services/RideStorage';
 import RideStatsCard from '../../components/RideStatsCard';
 import type { RideData } from '../../hooks/useRideTracker';
