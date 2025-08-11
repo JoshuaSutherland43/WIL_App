@@ -36,8 +36,8 @@ const SosAlertScreen = () => {
         if (!isActivatedRef.current && translationY <= ACTIVATION_THRESHOLD) {
           if (!aboveThreshold) setAboveThreshold(true);
           isActivatedRef.current = true;
-          // Subtle feedback on crossing threshold
-          Animated.spring(buttonScale, { toValue: 1.05, useNativeDriver: true, friction: 5 }).start();
+          // Subtle feedback on crossing threshold (slightly more bouncy)
+          Animated.spring(buttonScale, { toValue: 1.06, useNativeDriver: true, tension: 96, friction: 4.5 }).start();
           // Start 10s countdown while held above threshold
           if (!counting) {
             setCounting(true);
@@ -55,8 +55,8 @@ const SosAlertScreen = () => {
                   setCounting(false);
                   setActivated(true);
                   Animated.parallel([
-                    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }),
-                    Animated.spring(translateY, { toValue: -200, useNativeDriver: true, friction: 6, tension: 80 }),
+                    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, tension: 96, friction: 4.5 }),
+                    Animated.spring(translateY, { toValue: -200, useNativeDriver: true, friction: 4.5, tension: 96 }),
                   ]).start();
 
                   // TODO: Trigger actual SOS action here (navigate, API call, etc.)
@@ -67,7 +67,7 @@ const SosAlertScreen = () => {
                     setActivated(false);
                     isActivatedRef.current = false;
                     setAboveThreshold(false);
-                    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, friction: 6, tension: 80 }).start();
+                    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, friction: 4.5, tension: 96 }).start();
                   }, 1200);
                   return 0;
                 }
@@ -90,7 +90,7 @@ const SosAlertScreen = () => {
             countdownTimerRef.current = null;
           }
           if (counting) setCounting(false);
-          Animated.spring(buttonScale, { toValue: 0.98, useNativeDriver: true }).start();
+          Animated.spring(buttonScale, { toValue: 0.98, useNativeDriver: true, tension: 96, friction: 4.5 }).start();
         }
       },
     }
@@ -101,7 +101,7 @@ const SosAlertScreen = () => {
   ) => {
     const { state, oldState } = event.nativeEvent;
     if (state === State.BEGAN) {
-      Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true }).start();
+      Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true, tension: 96, friction: 4.5 }).start();
     }
 
     // On gesture end/cancel, reset visuals and state
@@ -115,15 +115,15 @@ const SosAlertScreen = () => {
       if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current as any); countdownTimerRef.current = null; }
       if (counting) setCounting(false);
       setAboveThreshold(false);
-      Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start();
+      Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true, tension: 96, friction: 4.5 }).start();
       // If successfully activated, keep at top until auto-reset; otherwise reset immediately
       if (!activated) {
         isActivatedRef.current = false;
         Animated.spring(translateY, {
           toValue: 0,
           useNativeDriver: true,
-          tension: 80,
-          friction: 6,
+          tension: 96,
+          friction: 4.5,
         }).start();
       }
     }
