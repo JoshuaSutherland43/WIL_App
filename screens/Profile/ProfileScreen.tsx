@@ -10,6 +10,7 @@ import { getRides } from '../../services/RideStorage';
 import type { RideData } from '../../hooks/useRideTracker';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/colors';
+import { FIREBASE_ENABLED, auth } from '../../services/FirebaseAuthService';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
@@ -32,11 +33,18 @@ export default function ProfileScreen() {
     { label: 'Hours', value: '0', boxColor: colors.profileStatHoursBox, circleColor: colors.profileStatHoursCircle, icon: 'clock' },
     { label: 'Points', value: '0', boxColor: colors.profileStatPointsBox, circleColor: colors.profileStatPointsCircle, icon: 'star' },
   ]);
+  const [recentRides, setRecentRides] = useState<RideData[]>([]);
+  const displayName = FIREBASE_ENABLED && auth?.currentUser?.displayName
+    ? auth?.currentUser?.displayName
+    : 'Rider';
+  const email = FIREBASE_ENABLED && auth?.currentUser?.email ? auth?.currentUser?.email : '—';
 
   useEffect(() => {
     (async () => {
       try {
         const rides: RideData[] = await getRides();
+        const sorted = [...rides].sort((a, b) => b.startTime - a.startTime);
+        setRecentRides(sorted.slice(0, 3));
         const totalRides = rides.length;
         const totalDistanceMeters = rides.reduce((a, r) => a + (r.totalDistance || 0), 0);
         const totalKm = Math.round(totalDistanceMeters / 1000);
@@ -91,8 +99,8 @@ export default function ProfileScreen() {
       <View style={styles.userSection}>
         <View style={styles.userIcon} />
         <View style={styles.userText}>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>johndoe@email.com</Text>
+          <Text style={styles.userName}>{displayName}</Text>
+          <Text style={styles.userEmail}>{email}</Text>
         </View>
       </View>
 
@@ -135,14 +143,58 @@ export default function ProfileScreen() {
         renderItem={renderAchievement}
       />
 
+      <TouchableOpacity
+        style={styles.addHorseBtn}
+        activeOpacity={0.85}
+        onPress={() => handleNavigate('CreateHorse')}
+        disabled={navDisabled}
+      >
+        <Icon name="plus" size={18} color="#fff" />
+        <Text style={styles.addHorseTxt}>Add Horse</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.myHorsesBtn}
+        activeOpacity={0.85}
+        onPress={() => handleNavigate('HorsesList')}
+        disabled={navDisabled}
+      >
+        <Icon name="list" size={18} color="#2D2D2D" />
+        <Text style={styles.myHorsesTxt}>My Horses</Text>
+      </TouchableOpacity>
+
       <View style={styles.historyContainer}>
-        <View>
-          <Text style={styles.historyTitle}>History</Text>
-          <Text style={styles.historySubtitle}>View your latest rides</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <View>
+            <Text style={styles.historyTitle}>History</Text>
+            <Text style={styles.historySubtitle}>View your latest rides</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => (navigation as any).navigate('Analytics', { screen: 'RideStats' })}
+            activeOpacity={0.7}
+            style={styles.historyIconCircle}
+          >
+            <Icon name="clock" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
-        <View style={styles.historyIconCircle}>
-          <Icon name="clock" size={24} color="#fff" />
-        </View>
+        {recentRides.length > 0 && (
+          <View style={{ marginTop: 12 }}>
+            {recentRides.map((r, idx) => (
+              <TouchableOpacity
+                key={r.startTime}
+                style={styles.historyItem}
+                activeOpacity={0.8}
+                onPress={() => (navigation as any).navigate('Analytics', { screen: 'RideDetail', params: { startTime: r.startTime } })}
+              >
+                <View>
+                  <Text style={styles.historyItemTitle}>Ride #{idx + 1}</Text>
+                  <Text style={styles.historyItemSub}>{new Date(r.startTime).toLocaleString()}</Text>
+                </View>
+                <Text style={styles.historyItemStat}>{(r.totalDistance / 1000).toFixed(1)} km</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -173,8 +225,16 @@ const styles = StyleSheet.create({
   achievementIconOuter: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   achievementTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 4, paddingTop: 10 },
   achievementDesc: { fontSize: 12, color: '#4A4949', textAlign: 'center', paddingTop: 5 },
-  historyContainer: { width: '100%', maxWidth: 375, height: 80, backgroundColor: '#FFFFFF', borderRadius: 25, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 5, paddingLeft: 15, marginTop: 40, alignSelf: 'center' },
+  historyContainer: { width: '100%', maxWidth: 375, backgroundColor: '#FFFFFF', borderRadius: 25, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingRight: 5, paddingLeft: 15, marginTop: 40, alignSelf: 'center', paddingVertical: 12 },
   historyTitle: { fontSize: 16, fontWeight: 'bold' },
   historySubtitle: { fontSize: 14, color: '#666' },
   historyIconCircle: { width: 53, height: 53, borderRadius: 26.5, backgroundColor: '#2D2D2D', alignItems: 'center', justifyContent: 'center' },
+  historyItem: { marginTop: 8, backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  historyItemTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
+  historyItemSub: { fontSize: 12, color: '#6B7280' },
+  historyItemStat: { fontSize: 14, fontWeight: '600', color: '#111' },
+  addHorseBtn: { marginTop: 16, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2D2D2D', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 8 },
+  addHorseTxt: { color: '#fff', fontWeight: '700', marginLeft: 8 },
+  myHorsesBtn: { marginTop: 10, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 8, borderWidth: 1, borderColor: '#E5E7EB' },
+  myHorsesTxt: { color: '#2D2D2D', fontWeight: '700', marginLeft: 8 },
 });

@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { getRides } from '../../services/RideStorage';
 import RideStatsCard from '../../components/RideStatsCard';
 import type { RideData as BaseRideData } from '../../hooks/useRideTracker';
 import { primaryPreviewRoutes } from '../../constants/trails';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { useNavigation } from '@react-navigation/native';
 
 // Extend RideData locally to include optional routeDistances if the active hook version omits it
 type RideData = BaseRideData & { routeDistances?: Record<string, number> };
 
 const RideStatsScreen = () => {
   const [rides, setRides] = useState<RideData[]>([]);
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     (async () => {
@@ -33,7 +35,12 @@ const RideStatsScreen = () => {
             })
             .filter(Boolean);
           return (
-            <View key={ride.startTime + '-' + i} style={styles.card}>
+            <TouchableOpacity
+              key={ride.startTime + '-' + i}
+              style={styles.card}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('RideDetail', { startTime: ride.startTime })}
+            >
               <RideStatsCard
                 title={`Ride #${rides.length - i}`}
                 distance={ride.totalDistance}
@@ -52,7 +59,7 @@ const RideStatsScreen = () => {
                   ))}
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           );
         })
       )}
