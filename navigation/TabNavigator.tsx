@@ -1,21 +1,15 @@
 import React, { ReactNode } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
-
-//Icons import
 import { Ionicons } from '@expo/vector-icons';
-import ProfileStack from './ProfileStack'; // <-- import at top
-
+import ProfileStack from './ProfileStack';
 // Screens
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import LiveTrackingScreen from '../screens/Mapping/LiveTrackingScreen';
 import SosAlertScreen from '../screens/Sos/SosAlertScreen';
 import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
-import SettingsScreen from '../screens/Profile/SettingsScreen';
-
-<<<<<<< HEAD
+// import SettingsScreen from '../screens/Profile/SettingsScreen'; // (unused currently)
 import { Colors } from '../constants/colors';
-import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
