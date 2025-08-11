@@ -1,19 +1,90 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  Dimensions,
+} from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 
+const achievementsData = [
+  { color: "#FFB0B0", title: "First Ride", desc: "Completed your first ride" },
+  { color: "#E8FFA2", title: "100km Club", desc: "Rode over 100 km" },
+  { color: "#A0FF9D", title: "Early Bird", desc: "Morning ride before 6 am" },
+];
+
+const statsData = [
+  {
+    label: "Rides",
+    value: "12",
+    boxColor: "#FFE2E5",
+    circleColor: "#FA5A7D",
+    icon: "activity",
+  },
+  {
+    label: "Km",
+    value: "98",
+    boxColor: "#FFF4DE",
+    circleColor: "#FF947A",
+    icon: "map",
+  },
+  {
+    label: "Hours",
+    value: "5",
+    boxColor: "#DCFCE7",
+    circleColor: "green",
+    icon: "clock",
+  },
+  {
+    label: "Points",
+    value: "250",
+    boxColor: "#F3E8FF",
+    circleColor: "#BF83FF",
+    icon: "star",
+  },
+];
+
 export default function ProfileScreen() {
   const navigation = useNavigation();
+  const [navDisabled, setNavDisabled] = useState(false);
 
+  const handleNavigate = useCallback(
+    (screenName: string) => {
+      if (navDisabled) return;
+      setNavDisabled(true);
+      navigation.navigate(screenName as never);
+      setTimeout(() => setNavDisabled(false), 500);
+    },
+    [navDisabled, navigation]
+  );
+
+  type Achievement = {
+    color: string;
+    title: string;
+    desc: string;
+  };
+
+  const renderAchievement = ({ item }: { item: Achievement }) => (
+    <View style={[styles.achievementCard, { backgroundColor: item.color }]}>
+      <View style={styles.achievementIconOuter}>
+        <Icon name="award" size={24} />
+      </View>
+      <Text style={styles.achievementTitle}>{item.title}</Text>
+      <Text style={styles.achievementDesc}>{item.desc}</Text>
+    </View>
+  );
   return (
-    <ScrollView style={styles.container} nestedScrollEnabled>
+    <ScrollView style={styles.container}>
       {/* Top Icons */}
       <View style={styles.topIcons}>
-        <TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7}>
           <Icon name="settings" size={27} />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7}>
           <Icon name="bell" size={27} />
         </TouchableOpacity>
       </View>
@@ -31,21 +102,26 @@ export default function ProfileScreen() {
       <View style={styles.statsContainer}>
         <View style={styles.statsHeader}>
           <Text style={styles.statsTitle}>Stats</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("PersonalStatsScreen" as never)}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => handleNavigate("PersonalStatsScreen")}
+            disabled={navDisabled}
+          >
             <Text style={styles.viewMoreText}>View More</Text>
           </TouchableOpacity>
         </View>
+
         <View style={styles.statsRow}>
-          {[
-            { label: "Rides", value: "12", boxColor: "#FFE2E5", circleColor: "#FA5A7D", icon: "activity" },
-            { label: "Km", value: "98", boxColor: "#FFF4DE", circleColor: "#FF947A", icon: "map" },
-            { label: "Hours", value: "5", boxColor: "#DCFCE7", circleColor: "green", icon: "clock" },
-            { label: "Points", value: "250", boxColor: "#F3E8FF", circleColor: "#BF83FF", icon: "star" }
-          ].map((item, idx) => (
-            <View key={idx} style={[styles.statBox, { backgroundColor: item.boxColor }]}>
+          {statsData.map((item, idx) => (
+            <View
+              key={idx}
+              style={[styles.statBox, { backgroundColor: item.boxColor }]}
+            >
               <Text style={styles.statLabel1}>{item.label}</Text>
               <Text style={styles.statValue}>{item.value}</Text>
-              <View style={[styles.iconCircle, { backgroundColor: item.circleColor }]}>
+              <View
+                style={[styles.iconCircle, { backgroundColor: item.circleColor }]}
+              >
                 <Icon name={item.icon} size={16} color="#fff" />
               </View>
             </View>
@@ -59,35 +135,24 @@ export default function ProfileScreen() {
           <Icon name="award" size={20} style={{ marginRight: 5 }} />
           <Text style={styles.achievementsTitle}>Achievements</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("AchievementsScreen" as never)}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => handleNavigate("AchievementsScreen")}
+          disabled={navDisabled}
+        >
           <Text style={styles.viewMoreText}>View More</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Achievements Scroll */}
-      <ScrollView
+      {/* Achievements Horizontal List */}
+      <FlatList
+        data={achievementsData}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 4 }}
-        nestedScrollEnabled
-      >
-        {[
-          { color: "#FFB0B0", title: "First Ride", desc: "Completed your first ride" },
-          { color: "#E8FFA2", title: "100km Club", desc: "Rode over 100 km" },
-          { color: "#A0FF9D", title: "Early Bird", desc: "Morning ride before 6 am" }
-        ].map((item, idx) => (
-          <View
-            key={idx}
-            style={[styles.achievementCard, { backgroundColor: item.color }]}
-          >
-            <View style={styles.achievementIconOuter}>
-              <Icon name="award" size={24} />
-            </View>
-            <Text style={styles.achievementTitle}>{item.title}</Text>
-            <Text style={styles.achievementDesc}>{item.desc}</Text>
-          </View>
-        ))}
-      </ScrollView>
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={renderAchievement}
+      />
 
       {/* History Section */}
       <View style={styles.historyContainer}>
@@ -103,36 +168,65 @@ export default function ProfileScreen() {
   );
 }
 
+const { width: screenWidth } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
-  
-  container: { flex: 1, backgroundColor: "#F4F7FE", padding: 16, paddingTop: 35 },
-  
-  topIcons: { flexDirection: "row", paddingTop: 10, justifyContent: "space-between" },
-  
-  userSection: { flexDirection: "row", alignItems: "center", marginTop: 20 },
-  
-  userIcon: { width: 78, height: 78, borderRadius: 39, backgroundColor: "#ccc" },
-  
-  userText: { marginLeft: 12 },
-  
-  userName: { fontSize: 20, fontWeight: "bold" },
-  
-  userEmail: { fontSize: 14, color: "#666" },
-  
-  viewMore: { alignSelf: "flex-end", marginTop: 10, marginBottom: 5 },
-  
-  viewMoreText: { fontSize: 12, color: "#007AFF" },
-  
+  container: {
+    flex: 1,
+    backgroundColor: "#F4F7FE",
+    padding: 16,
+    paddingTop: 35,
+  },
+
+  topIcons: {
+    flexDirection: "row",
+    paddingTop: 10,
+    justifyContent: "space-between",
+  },
+
+  userSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+  },
+
+  userIcon: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    backgroundColor: "#ccc",
+  },
+
+  userText: {
+    marginLeft: 12,
+  },
+
+  userName: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+
+  userEmail: {
+    fontSize: 14,
+    color: "#666",
+  },
+
+  viewMoreText: {
+    fontSize: 12,
+    color: "#007AFF",
+  },
+
   statsContainer: {
-    width: 375,
+    width: "100%",
+    maxWidth: 375,
     height: 147,
-    marginTop:35,
+    marginTop: 35,
     backgroundColor: "#FFFFFF",
     borderRadius: 23,
     padding: 10,
-    alignSelf: "center"
+    alignSelf: "center",
   },
-  
+
   iconCircle: {
     width: 30,
     height: 30,
@@ -142,8 +236,11 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 
-  statsRow: { flexDirection: "row", justifyContent: "space-around" },
-  
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+
   statsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -152,45 +249,44 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     marginBottom: 8,
   },
+
   statsTitle: {
     fontWeight: "bold",
     fontSize: 16,
   },
 
-
   statBox: {
-    width: 65,
+    width: (screenWidth - 110) / 4,
     height: 90,
-    borderRadius: 15,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "space-between",
     padding: 4,
     marginBottom: 15,
   },
-  statLabel1: { fontSize: 12},
 
-  statValue: { fontSize: 14, fontWeight: 'bold' },
+  statLabel1: {
+    fontSize: 12,
+  },
 
-
-  achievementsHeading: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 20,
-    marginLeft:20,
-    marginBottom:10,
+  statValue: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
 
   achievementsHeader: {
-    marginTop:38,
-    marginLeft:10,
-    marginBottom:10,
+    marginTop: 38,
+    marginLeft: 10,
+    marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
-  achievementsTitle: { fontWeight: "bold", fontSize: 16 },
-
+  achievementsTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 
   achievementCard: {
     width: 168,
@@ -198,9 +294,8 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 12,
     padding: 10,
-    alignItems: "center"
+    alignItems: "center",
   },
-
 
   achievementIconOuter: {
     width: 42,
@@ -209,18 +304,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10
+    marginBottom: 10,
   },
 
+  achievementTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 4,
+    paddingTop: 10,
+  },
 
-  achievementTitle: { fontSize: 14, fontWeight: "bold", marginBottom: 4, paddingTop: 10 },
-  
-  
-  achievementDesc: { fontSize: 12, color: "#4A4949", textAlign: "center", paddingTop: 5 },
-  
-  
+  achievementDesc: {
+    fontSize: 12,
+    color: "#4A4949",
+    textAlign: "center",
+    paddingTop: 5,
+  },
+
   historyContainer: {
-    width: 375,
+    width: "100%",
+    maxWidth: 375,
     height: 80,
     backgroundColor: "#FFFFFF",
     borderRadius: 25,
@@ -228,23 +331,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingRight: 5,
-    paddingLeft:15,
+    paddingLeft: 15,
     marginTop: 40,
-    alignSelf: "center"
+    alignSelf: "center",
   },
-  
-  historyTitle: { fontSize: 16, fontWeight: "bold" },
-  
-  
-  historySubtitle: { fontSize: 14, color: "#666" },
-  
-  
+
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  historySubtitle: {
+    fontSize: 14,
+    color: "#666",
+  },
+
   historyIconCircle: {
     width: 53,
     height: 53,
     borderRadius: 26.5,
     backgroundColor: "#2D2D2D",
     alignItems: "center",
-    justifyContent: "center"
-  }
+    justifyContent: "center",
+  },
 });
