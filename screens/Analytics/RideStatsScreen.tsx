@@ -12,6 +12,7 @@ const RideStatsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: 'F4F7FE',
         justifyContent: 'center',
         alignItems: 'center',
     }
