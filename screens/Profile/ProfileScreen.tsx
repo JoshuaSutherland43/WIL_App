@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+
 import {
   View,
   Text,
@@ -9,8 +10,11 @@ import {
   Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
+import { ProfileStackParamList } from '@/navigation/ProfileStack';  // adjust path
 
+type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 const achievementsData = [
   { color: "#FFB0B0", title: "First Ride", desc: "Completed your first ride" },
   { color: "#E8FFA2", title: "100km Club", desc: "Rode over 100 km" },
@@ -49,7 +53,7 @@ const statsData = [
 ];
 
 export default function ProfileScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [navDisabled, setNavDisabled] = useState(false);
 
   const handleNavigate = useCallback(
@@ -78,7 +82,10 @@ export default function ProfileScreen() {
     </View>
   );
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+      keyboardShouldPersistTaps="handled" 
+      nestedScrollEnabled>
+
       {/* Top Icons */}
       <View style={styles.topIcons}>
         <TouchableOpacity activeOpacity={0.7}>
@@ -104,9 +111,8 @@ export default function ProfileScreen() {
           <Text style={styles.statsTitle}>Stats</Text>
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => handleNavigate("PersonalStatsScreen")}
-            disabled={navDisabled}
-          >
+            onPress={() => navigation.navigate('PersonalStats')}>
+
             <Text style={styles.viewMoreText}>View More</Text>
           </TouchableOpacity>
         </View>
@@ -152,6 +158,7 @@ export default function ProfileScreen() {
         contentContainerStyle={{ paddingHorizontal: 4 }}
         keyExtractor={(_, index) => index.toString()}
         renderItem={renderAchievement}
+        nestedScrollEnabled
       />
 
       {/* History Section */}

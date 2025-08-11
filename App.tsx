@@ -1,18 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
 import AuthNavigator from './navigation/AuthNavigator';
 
 export default function App() {
-  // ASK CALEB TO ADD THE LOGIN AUTHENTICATION LOGIC LATER
-  // For now, we will assume the user is logged in
-  // This is a placeholder. In a real app, you would check the authentication state.
-  const isLoggedIn = true; 
+  const isLoggedIn = true;
 
-  return (
-    <NavigationContainer>
-      {isLoggedIn ? <AppNavigator /> : <AuthNavigator />}
-    </NavigationContainer>
-  );
+  const navigator = useMemo(() => (isLoggedIn ? <AppNavigator /> : <AuthNavigator />), [isLoggedIn]);
+
+  return <NavigationContainer>{navigator}</NavigationContainer>;
 }
-

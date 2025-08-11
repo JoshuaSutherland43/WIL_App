@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import ProfileStack from './ProfileStack'; // <-- import at top
 
 // Screens
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
@@ -79,9 +80,10 @@ const TabNavigator = () => {
           tabBarLabel: 'Analytics',
         }}
       />
+      
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="ProfileStack"
+        component={ProfileStack}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="person-outline" color={color} size={24} />
