@@ -5,11 +5,43 @@ import AuthHeader from '../../components/Auth/AuthHeader';
 import AuthInput from '../../components/Auth/AuthInput';
 import AuthButton from '../../components/Auth/AuthButton';
 import SocialButton from '../../components/Auth/SocialButton';
+import { registerUser } from '../../services/auth';
 
 const RegisterScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  const [error, setError] = useState('');
+
+  const handleRegister = async () => {
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    try {
+      const userCredential = await registerUser(email.trim(), password);
+      console.log('Registered user:', userCredential.user?.uid);
+      setError('');
+      // UI phase: route to verify email placeholder
+      navigation.navigate('VerifyEmail');
+    } catch (err: any) {
+      switch (err?.code) {
+        case 'auth/email-already-in-use':
+          setError('Email already in use.');
+          break;
+        case 'auth/invalid-email':
+          setError('Please enter a valid email address.');
+          break;
+        case 'auth/weak-password':
+          setError('Password is too weak.');
+          break;
+        default:
+          setError('Could not create account. Please try again.');
+      }
+      console.error(err);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -33,14 +65,14 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
           onToggleVisibility={() => setIsPasswordVisible(!isPasswordVisible)}
         />
 
-        <View style={styles.forgotPasswordContainer}>
-            <Text style={styles.errorText}>Wrong password</Text>
+    <View style={styles.forgotPasswordContainer}>
+      {!!error && <Text style={styles.errorText}>{error}</Text>}
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                 <Text style={styles.link}>Forgot password?</Text>
             </TouchableOpacity>
         </View>
 
-        <AuthButton title="Continue" onPress={() => { /* Handle Register */ }} isPrimary={false} />
+    <AuthButton title="Continue" onPress={handleRegister} isPrimary={false} />
 
         <View style={styles.orContainer}>
           <View style={styles.line} />
