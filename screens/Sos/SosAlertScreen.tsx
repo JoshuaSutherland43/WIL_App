@@ -11,27 +11,121 @@ import {
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 const SosAlertScreen = () => {
+  const [activated, setActivated] = useState(false);
+  const [aboveThreshold, setAboveThreshold] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const [counting, setCounting] = useState(false);
   const translateY = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+  const isActivatedRef = useRef(false);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoResetTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const ACTIVATION_THRESHOLD = -120; // easier to reach
+  const CANCEL_HYSTERESIS = 20; // allow small jitter before canceling
+  const HOLD_MS = 200; // faster activation while still preventing accidental triggers
 
+  // Map gesture Y to animated value for smooth movement; use listener for activation logic
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationY: translateY } }],
     {
       useNativeDriver: true,
+      listener: (event: any) => {
+        const { translationY } = event.nativeEvent;
+        // Activation when swiped up beyond threshold
+        if (!isActivatedRef.current && translationY <= ACTIVATION_THRESHOLD) {
+          if (!aboveThreshold) setAboveThreshold(true);
+          isActivatedRef.current = true;
+          // Subtle feedback on crossing threshold
+          Animated.spring(buttonScale, { toValue: 1.05, useNativeDriver: true, friction: 5 }).start();
+          // Start 10s countdown while held above threshold
+          if (!counting) {
+            setCounting(true);
+            setCountdown(10);
+            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current as any);
+            countdownTimerRef.current = setInterval(() => {
+              setCountdown(prev => {
+                const next = prev - 1;
+                if (next <= 0) {
+                  // Countdown finished => finalize activation
+                  if (countdownTimerRef.current) {
+                    clearInterval(countdownTimerRef.current as any);
+                    countdownTimerRef.current = null;
+                  }
+                  setCounting(false);
+                  setActivated(true);
+                  Animated.parallel([
+                    Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }),
+                    Animated.spring(translateY, { toValue: -200, useNativeDriver: true, friction: 6, tension: 80 }),
+                  ]).start();
+
+                  // TODO: Trigger actual SOS action here (navigate, API call, etc.)
+
+                  // Auto reset after a short delay to restore UI
+                  if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+                  autoResetTimerRef.current = setTimeout(() => {
+                    setActivated(false);
+                    isActivatedRef.current = false;
+                    setAboveThreshold(false);
+                    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, friction: 6, tension: 80 }).start();
+                  }, 1200);
+                  return 0;
+                }
+                return next;
+              });
+            }, 1000);
+          }
+        }
+
+        // If user moves back below threshold while still holding, cancel pending activation
+        if (isActivatedRef.current && translationY > ACTIVATION_THRESHOLD + CANCEL_HYSTERESIS) {
+          isActivatedRef.current = false;
+          if (holdTimerRef.current) {
+            clearTimeout(holdTimerRef.current);
+            holdTimerRef.current = null;
+          }
+          if (aboveThreshold) setAboveThreshold(false);
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current as any);
+            countdownTimerRef.current = null;
+          }
+          if (counting) setCounting(false);
+          Animated.spring(buttonScale, { toValue: 0.98, useNativeDriver: true }).start();
+        }
+      },
     }
   );
 
-  const onHandlerStateChange = (event: import('react-native-gesture-handler').PanGestureHandlerStateChangeEvent) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
+  const onHandlerStateChange = (
+    event: import('react-native-gesture-handler').PanGestureHandlerStateChangeEvent
+  ) => {
+    const { state, oldState } = event.nativeEvent;
+    if (state === State.BEGAN) {
+      Animated.spring(buttonScale, { toValue: 0.97, useNativeDriver: true }).start();
+    }
+
+    // On gesture end/cancel, reset visuals and state
+    if (
+      oldState === State.ACTIVE ||
+      state === State.END ||
+      state === State.CANCELLED ||
+      state === State.FAILED
+    ) {
+      if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
+      if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current as any); countdownTimerRef.current = null; }
+      if (counting) setCounting(false);
+      setAboveThreshold(false);
       Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start();
-      Animated.spring(translateY, { 
-        toValue: 0, 
-        useNativeDriver: true,
-        tension: 80,
-        friction: 6
-      }).start();
-    } else if (event.nativeEvent.state === State.BEGAN) {
-      Animated.spring(buttonScale, { toValue: 0.95, useNativeDriver: true }).start();
+      // If successfully activated, keep at top until auto-reset; otherwise reset immediately
+      if (!activated) {
+        isActivatedRef.current = false;
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 80,
+          friction: 6,
+        }).start();
+      }
     }
   };
 
@@ -57,31 +151,35 @@ const SosAlertScreen = () => {
 
       <View style={styles.mainContent}>
         <Text style={styles.title}>
-          Having an Emergency?
+          {activated ? 'Emergency Alert Activated' : 'Emergency Alert Activating'}
         </Text>
         <Text style={styles.subtitle}>
-          Swipe the button up and hold.{'\n'}Help will arrive soon.
+          {activated
+            ? 'Help is on the way.'
+            : (aboveThreshold && counting
+                ? `Hold button up to confirm\nActivating in ${countdown} seconds...`
+                : 'Swipe the button up and hold.\nHelp will arrive soon.')}
         </Text>
       </View>
 
       <View style={styles.buttonContainer}>
-        <PanGestureHandler
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-        >
-          <Animated.View style={styles.swipeContainer}>
-            <View style={styles.swipeTrack}>
+        <Animated.View style={styles.swipeContainer}>
+          <View style={styles.swipeTrack}>
+            <PanGestureHandler
+              onGestureEvent={onGestureEvent}
+              onHandlerStateChange={onHandlerStateChange}
+              activeOffsetY={-10} // only activate for upward swipes beyond 10px
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            >
               <Animated.View style={[styles.sosButton, animatedButtonStyle]}>
-                <Text style={styles.sosText}>
-                  SOS
-                </Text>
+                <Text style={styles.sosText}>{(aboveThreshold && counting) || activated ? String(countdown) : 'SOS'}</Text>
               </Animated.View>
-            </View>
-            <Text style={styles.swipeInstruction}>
-              Swipe the button up{'\n'}and hold.
-            </Text>
-          </Animated.View>
-        </PanGestureHandler>
+            </PanGestureHandler>
+          </View>
+          <Text style={styles.swipeInstruction}>
+            {activated ? 'SOS Activated' : (aboveThreshold && counting ? 'Keep holding...' : 'Swipe the button up\nand hold.')}
+          </Text>
+        </Animated.View>
       </View>
 
       {/* Bottom Navigation */}
