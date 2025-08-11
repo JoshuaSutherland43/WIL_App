@@ -8,9 +8,10 @@ import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import LiveTrackingScreen from '../screens/Mapping/LiveTrackingScreen';
 import SosAlertScreen from '../screens/Sos/SosAlertScreen';
 import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
-import SettingsScreen from '../screens/Profile/ProfileScreen';
+import SettingsScreen from '../screens/Profile/SettingsScreen';
 
 import { COLORS } from '../constants/colors';
+import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -24,6 +25,7 @@ const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={{
+        lazy:true,
         headerShown: false,
         tabBarShowLabel: true,
         tabBarStyle: styles.tabBar,
@@ -59,8 +61,7 @@ const TabNavigator = () => {
         component={SosAlertScreen}
         options={{
           tabBarIcon: () => (
-            <View style={styles.sosIconContainer}>
-              <Ionicons name="warning" color="#FFFFFF" size={20} />
+            <View>
               <Text style={styles.sosText}>SOS</Text>
             </View>
           ),
@@ -80,7 +81,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={SettingsScreen}
+        component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="person-outline" color={color} size={24} />
@@ -97,11 +98,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
+    marginBottom:0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    height: 90,
+    height: 110,
     paddingHorizontal: 8,
-    paddingBottom: 25,
+    paddingBottom:1,
     paddingTop: 8,
     borderTopWidth: 0,
   },
@@ -114,37 +116,33 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   sosButtonWrapper: {
-    top: -15,
+    top: -5,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
   },
   sosButton: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 35,
-    backgroundColor: '#FF6B47',
+    backgroundColor: '#FF3535',
     alignItems: 'center',
     justifyContent: 'center',
+    
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  sosIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   sosText: {
     color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
+    marginTop:10,
+    fontSize: 12,
+    fontFamily:'Poppins',
+    alignItems:'center',
+    fontWeight: 'bold',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginTop: 2,
   },
 });
 
