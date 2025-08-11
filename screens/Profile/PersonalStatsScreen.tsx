@@ -1,11 +1,12 @@
-import { useColorScheme } from 'react-native';
-import {Colors} from 'constants/colors';
+import { useColorScheme, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from 'components/theme/ThemedText';
-import { ThemedView  } from 'components/theme/ThemedView';
+import { ThemedView } from 'components/theme/ThemedView';
+import { Colors } from 'constants/colors';
 import { ReportDownload } from 'services/AnalyticsService';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState, useMemo } from 'react';
+import { getRides } from 'services/RideStorage';
+import type { RideData } from 'hooks/useRideTracker';
 import {
   BarChart,
   LineChart,
@@ -36,21 +37,25 @@ export default function AnalyticsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const [userStats, setUserStats] = useState<UserStats>({
-    totalRides: 47,
-    totalDistance: 328,
-    favoriteTrail: "Secrets Trail",
-    hoursRidden: 89,
-    trailsCompleted: 12,
-    avgSpeed: 12,
-    lastRide: "3 days ago"
-  });
+  const [rides, setRides] = useState<RideData[]>([]);
+  const userStats = useMemo<UserStats>(() => {
+    if (!rides.length) {
+      return { totalRides: 0, totalDistance: 0, favoriteTrail: '-', hoursRidden: 0, trailsCompleted: 0, avgSpeed: 0, lastRide: '-' };
+    }
+    const totalRides = rides.length;
+    const totalDistanceMeters = rides.reduce((a, r) => a + r.totalDistance, 0);
+    const totalDistance = +(totalDistanceMeters / 1000).toFixed(1); // km
+    // duration stored ms -> hours
+    const hoursRidden = +(rides.reduce((a, r) => a + r.duration, 0) / 1000 / 3600).toFixed(1);
+    const avgSpeed = hoursRidden > 0 ? +(totalDistance / hoursRidden).toFixed(1) : 0; // km/h
+    const lastRideTime = new Date(Math.max(...rides.map(r => r.startTime)));
+    const diffDays = Math.floor((Date.now() - lastRideTime.getTime()) / (1000 * 60 * 60 * 24));
+    const lastRide = diffDays === 0 ? 'Today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+    // trailsCompleted & favoriteTrail placeholders until route meta tracking exists
+    return { totalRides, totalDistance, favoriteTrail: '-', hoursRidden, trailsCompleted: 0, avgSpeed, lastRide };
+  }, [rides]);
 
-  const [chartData, setChartData] = useState<ChartData>({
-    rideFrequency: [],
-    trailPopularity: [],
-    weeklyDistance: []
-  });
+  const [chartData, setChartData] = useState<ChartData>({ rideFrequency: [], trailPopularity: [], weeklyDistance: [] });
 
   // Generate data based on selected timeSlot
   const generateDataForTimeSlot = (slot: TimeSlot) => {
@@ -169,42 +174,14 @@ export default function AnalyticsScreen() {
     };
   };
 
-  useEffect(() => {
-    const newData = generateDataForTimeSlot(timeSlot);
-    setChartData(newData);
-    
-    // Update user stats based on time slot (mock implementation)
-    const multipliers = {
-      day: 0.1,
-      week: 0.3,
-      month: 1,
-      '3month': 2.5,
-      '6month': 4,
-      '1year': 7
-    };
-    
-    const multiplier = multipliers[timeSlot];
-    setUserStats(prev => ({
-      ...prev,
-      totalRides: Math.round(47 * multiplier),
-      totalDistance: Math.round(328 * multiplier),
-      hoursRidden: Math.round(89 * multiplier),
-    }));
-  }, [timeSlot]);
+  useEffect(() => { setChartData(generateDataForTimeSlot(timeSlot)); }, [timeSlot, colors.primary]);
+
+  useEffect(() => { (async () => { try { const stored = await getRides(); setRides(stored); } catch {} })(); }, []);
 
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
     try {
-      const reportData = {
-        timeSlot,
-        userStats,
-        chartData,
-        generatedDate: new Date().toISOString()
-      };
-      
-      
-
-      await ReportDownload.generateAndShareReport(reportData);
+  await ReportDownload.generateAndShareReport({ timeSlot, userStats, chartData, generatedDate: new Date().toISOString() });
       Alert.alert('Success', 'Report generated successfully!');
     } catch (error) {
       Alert.alert('Error', 'Failed to generate report. Please try again.');
