@@ -5,6 +5,11 @@ import Icon from 'react-native-vector-icons/Feather';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import { ProfileStackParamList } from '@/navigation/ProfileStack';
+import { useEffect } from 'react';
+import { getRides } from '../../services/RideStorage';
+import type { RideData } from '../../hooks/useRideTracker';
+import { useColorScheme } from 'react-native';
+import { Colors } from '../../constants/colors';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
@@ -14,16 +19,43 @@ const achievementsData = [
   { color: '#A0FF9D', title: 'Early Bird', desc: 'Morning ride before 6 am' },
 ];
 
-const statsData = [
-  { label: 'Rides', value: '12', boxColor: '#FFE2E5', circleColor: '#FA5A7D', icon: 'activity' },
-  { label: 'Km', value: '98', boxColor: '#FFF4DE', circleColor: '#FF947A', icon: 'map' },
-  { label: 'Hours', value: '5', boxColor: '#DCFCE7', circleColor: 'green', icon: 'clock' },
-  { label: 'Points', value: '250', boxColor: '#F3E8FF', circleColor: '#BF83FF', icon: 'star' },
-];
+type StatItem = { label: string; value: string; boxColor: string; circleColor: string; icon: string };
 
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [navDisabled, setNavDisabled] = useState(false);
+  const scheme = useColorScheme();
+  const colors = Colors[scheme ?? 'light'];
+  const [statsData, setStatsData] = useState<StatItem[]>([
+    { label: 'Rides', value: '0', boxColor: colors.profileStatRidesBox, circleColor: colors.profileStatRidesCircle, icon: 'activity' },
+    { label: 'Km', value: '0', boxColor: colors.profileStatKmBox, circleColor: colors.profileStatKmCircle, icon: 'map' },
+    { label: 'Hours', value: '0', boxColor: colors.profileStatHoursBox, circleColor: colors.profileStatHoursCircle, icon: 'clock' },
+    { label: 'Points', value: '0', boxColor: colors.profileStatPointsBox, circleColor: colors.profileStatPointsCircle, icon: 'star' },
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const rides: RideData[] = await getRides();
+        const totalRides = rides.length;
+        const totalDistanceMeters = rides.reduce((a, r) => a + (r.totalDistance || 0), 0);
+        const totalKm = Math.round(totalDistanceMeters / 1000);
+        const totalDurationMs = rides.reduce((a, r) => a + (r.duration || 0), 0);
+        const hours = Math.round(totalDurationMs / (1000 * 60 * 60));
+        // Simple points model: 10 points per ride + 1 per km
+        const points = totalRides * 10 + totalKm;
+
+        setStatsData([
+          { label: 'Rides', value: String(totalRides), boxColor: colors.profileStatRidesBox, circleColor: colors.profileStatRidesCircle, icon: 'activity' },
+          { label: 'Km', value: String(totalKm), boxColor: colors.profileStatKmBox, circleColor: colors.profileStatKmCircle, icon: 'map' },
+          { label: 'Hours', value: String(hours), boxColor: colors.profileStatHoursBox, circleColor: colors.profileStatHoursCircle, icon: 'clock' },
+          { label: 'Points', value: String(points), boxColor: colors.profileStatPointsBox, circleColor: colors.profileStatPointsCircle, icon: 'star' },
+        ]);
+      } catch (e) {
+        // keep defaults on error
+      }
+    })();
+  }, []);
 
   const handleNavigate = useCallback(
     (screen: string) => {

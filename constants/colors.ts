@@ -38,6 +38,16 @@ export const Colors = {
     onPrimaryContainer: '#000000',
     onSurface: '#333333',
     onSurfaceVariant: '#555555',
+
+    // Profile stats tokens
+    profileStatRidesBox: '#FFE2E5',
+    profileStatRidesCircle: '#FA5A7D',
+    profileStatKmBox: '#FFF4DE',
+    profileStatKmCircle: '#FF947A',
+    profileStatHoursBox: '#DCFCE7',
+    profileStatHoursCircle: '#2E7D32',
+    profileStatPointsBox: '#F3E8FF',
+    profileStatPointsCircle: '#BF83FF',
   },
 
   dark: {
@@ -79,5 +89,15 @@ export const Colors = {
     onPrimaryContainer: '#FFFFFF',
     onSurface: '#E0E0E0',
     onSurfaceVariant: '#AAAAAA',
+
+    // Profile stats tokens (dark-adapted)
+    profileStatRidesBox: '#3B2F31',
+    profileStatRidesCircle: '#FA5A7D',
+    profileStatKmBox: '#3A352A',
+    profileStatKmCircle: '#FF947A',
+    profileStatHoursBox: '#203026',
+    profileStatHoursCircle: '#66BB6A',
+    profileStatPointsBox: '#2D2540',
+    profileStatPointsCircle: '#BF83FF',
   },
 };
