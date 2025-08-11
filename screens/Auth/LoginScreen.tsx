@@ -5,14 +5,45 @@ import AuthHeader from '../../components/Auth/AuthHeader';
 import AuthInput from '../../components/Auth/AuthInput';
 import AuthButton from '../../components/Auth/AuthButton';
 import SocialButton from '../../components/Auth/SocialButton';
+import { loginUser } from '../../services/auth';
 
 const LoginScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
+  const [error, setError] = useState('');
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    try {
+      const userCredential = await loginUser(email.trim(), password);
+      console.log('User signed in!', userCredential.user?.uid);
+      setError('');
+      // TODO: Navigate to main app screen
+    } catch (err: any) {
+      switch (err?.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          setError('Invalid email or password.');
+          break;
+        case 'auth/invalid-email':
+          setError('Please enter a valid email address.');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many attempts. Try again later.');
+          break;
+        default:
+          setError('An unexpected error occurred. Please try again.');
+      }
+      console.error(err);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.white }]}>
@@ -22,28 +53,38 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
         <AuthInput
           label="Your Email"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (error) setError('');
+          }}
           placeholder="help@gmail.com"
         />
 
         <AuthInput
           label="Password"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (error) setError('');
+          }}
           placeholder="••••••••••"
-          secureTextEntry
+          secureTextEntry={!isPasswordVisible}
           isPasswordVisible={isPasswordVisible}
           onToggleVisibility={() => setIsPasswordVisible(!isPasswordVisible)}
         />
 
         <View style={styles.forgotPasswordContainer}>
-          <Text style={[styles.errorText, { color: colors.error }]}>Wrong password</Text>
+          {error ? (
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+          ) : (
+            <View />
+          )}
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={[styles.link, { color: colors.link }]}>Forgot password?</Text>
           </TouchableOpacity>
         </View>
 
-        <AuthButton title="Continue" onPress={() => {}} isPrimary={true} />
+        <AuthButton title="Continue" onPress={handleLogin} isPrimary={true} />
 
         <View style={styles.orContainer}>
           <View style={[styles.line, { backgroundColor: colors.lightGrey }]} />
@@ -66,42 +107,20 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContainer: {
-    padding: 20,
-  },
+  container: { flex: 1 },
+  scrollContainer: { padding: 20 },
   forgotPasswordContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
     alignItems: 'center',
   },
-  errorText: {
-    fontSize: 14,
-  },
-  link: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-  },
-  orText: {
-    marginHorizontal: 10,
-  },
-  bottomTextContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
+  errorText: { fontSize: 14 },
+  link: { fontSize: 14, fontWeight: 'bold' },
+  orContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  line: { flex: 1, height: 1 },
+  orText: { marginHorizontal: 10 },
+  bottomTextContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   bottomText: {},
 });
 

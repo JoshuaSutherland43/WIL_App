@@ -1,8 +1,14 @@
 import React, { memo, useState, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import MapView, { PROVIDER_DEFAULT } from 'react-native-maps';
+import { DEFAULT_REGION } from '../../services/MapsService';
 
 /**
+ * 
+ * 
+ * 
+ * 
  * UI-only Map View
  * - Dark map canvas (placeholder View)
  * - Top overlay actions (settings, notifications with dot)
@@ -27,10 +33,16 @@ const UserMapView: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      {/* Map canvas placeholder (replace with MapView later) */}
-      <View style={styles.map}>
-        <Text style={styles.mapPlaceholderText}>Map will go here in the future</Text>
-      </View>
+      <MapView
+        style={StyleSheet.absoluteFillObject}
+        provider={PROVIDER_DEFAULT}
+        initialRegion={DEFAULT_REGION}
+        showsUserLocation
+        showsMyLocationButton
+        showsCompass
+      >
+        {/* Future: Polyline(s) will be added here */}
+      </MapView>
 
       {/* Top overlay */}
       <View style={styles.topBar}>
@@ -104,24 +116,7 @@ const UserMapView: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0f0f10',
-  },
-  map: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: '#121417',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapPlaceholderText: {
-    color: '#9AA0A6',
-    fontSize: 14,
-  },
+  root: { flex: 1, backgroundColor: '#0f0f10' },
   topBar: {
     position: 'absolute',
     top: 12,
@@ -131,13 +126,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  leftIcon: {
-    marginRight: 8,
-  },
-  rightIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  leftIcon: { marginRight: 8 },
+  rightIcons: { flexDirection: 'row', alignItems: 'center' },
   iconBtn: {
     width: 36,
     height: 36,
@@ -161,7 +151,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 120, // keeps above custom tab bar
+    bottom: 120,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -181,17 +171,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     elevation: 10,
   },
-  freeRide: {
-    backgroundColor: '#FF7DA4',
-  },
-  recent: {
-    backgroundColor: '#F2B270',
-  },
-  segmentText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
+  freeRide: { backgroundColor: '#FF7DA4' },
+  recent: { backgroundColor: '#F2B270' },
+  segmentText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });
 
 export default memo(UserMapView);

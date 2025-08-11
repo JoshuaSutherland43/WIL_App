@@ -5,6 +5,7 @@ import AuthHeader from '../../components/Auth/AuthHeader';
 import AuthInput from '../../components/Auth/AuthInput';
 import AuthButton from '../../components/Auth/AuthButton';
 import SocialButton from '../../components/Auth/SocialButton';
+import { registerUser } from '../../services/auth';
 
 const RegisterScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState('');
@@ -13,6 +14,35 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
 
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const [error, setError] = useState('');
+
+  const handleRegister = async () => {
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    try {
+      const userCredential = await registerUser(email.trim(), password);
+      console.log('Registered user:', userCredential.user?.uid);
+      setError('');
+      navigation.navigate('VerifyEmail');
+    } catch (err: any) {
+      switch (err?.code) {
+        case 'auth/email-already-in-use':
+          setError('Email already in use.');
+          break;
+        case 'auth/invalid-email':
+          setError('Please enter a valid email address.');
+          break;
+        case 'auth/weak-password':
+          setError('Password is too weak.');
+          break;
+        default:
+          setError('Could not create account. Please try again.');
+      }
+      console.error(err);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.white }]}>
@@ -37,13 +67,13 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
         />
 
         <View style={styles.forgotPasswordContainer}>
-          <Text style={[styles.errorText, { color: colors.error }]}>Wrong password</Text>
+          {!!error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
             <Text style={[styles.link, { color: colors.link }]}>Forgot password?</Text>
           </TouchableOpacity>
         </View>
 
-        <AuthButton title="Continue" onPress={() => {}} isPrimary={false} />
+        <AuthButton title="Continue" onPress={handleRegister} isPrimary={false} />
 
         <View style={styles.orContainer}>
           <View style={[styles.line, { backgroundColor: colors.lightGrey }]} />

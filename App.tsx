@@ -1,12 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { Suspense } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
-import AuthNavigator from './navigation/AuthNavigator';
+// IMPORTANT: Lazily import AuthNavigator to avoid initializing Firebase during app boot
+const AuthNavigator = React.lazy(() => import('./navigation/AuthNavigator'));
 
 export default function App() {
   const isLoggedIn = true;
-
-  const navigator = useMemo(() => (isLoggedIn ? <AppNavigator /> : <AuthNavigator />), [isLoggedIn]);
-
-  return <NavigationContainer>{navigator}</NavigationContainer>;
+  return (
+    <NavigationContainer>
+      {isLoggedIn ? (
+        <AppNavigator />
+      ) : (
+        <Suspense fallback={null}>
+          <AuthNavigator />
+        </Suspense>
+      )}
+    </NavigationContainer>
+  );
 }

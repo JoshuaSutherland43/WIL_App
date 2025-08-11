@@ -2,52 +2,6 @@ import { useRef, useState, useCallback } from 'react';
 import * as Location from 'expo-location';
 import type { LocationObject, LocationSubscription } from 'expo-location';
 import haversine from 'haversine';
-
-export type RidePoint = { latitude: number; longitude: number; altitude: number; timestamp: number };
-export type RideData = { startTime: number; path: RidePoint[]; totalDistance: number; elevationGain: number; duration: number };
-
-export default function useRideTracker() {
-  const [rideData, setRideData] = useState<RideData | null>(null);
-  const watchSub = useRef<LocationSubscription | null>(null);
-
-  const startRide = useCallback(async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') throw new Error('Location permission denied');
-    const startTime = Date.now();
-    const path: RidePoint[] = [];
-    let totalDistance = 0;
-    let elevationGain = 0;
-    watchSub.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.Highest, timeInterval: 1000, distanceInterval: 1 },
-      (loc: LocationObject) => {
-        const point: RidePoint = { latitude: loc.coords.latitude, longitude: loc.coords.longitude, altitude: loc.coords.altitude ?? 0, timestamp: Date.now() };
-        if (path.length) {
-          const prev = path[path.length - 1];
-            const dist = haversine(prev, point, { unit: 'meter' });
-            if (dist > 2 && dist < 60) {
-              totalDistance += dist;
-              const gain = (point.altitude - prev.altitude);
-              if (gain > 0) elevationGain += gain;
-            } else if (dist >= 60) {
-              return; // skip large jump
-            }
-        }
-        path.push(point);
-        setRideData({ startTime, path: [...path], totalDistance, elevationGain, duration: Date.now() - startTime });
-      }
-    );
-  }, []);
-
-  const stopRide = useCallback(() => {
-    if (watchSub.current) { watchSub.current.remove(); watchSub.current = null; }
-    return rideData;
-  }, [rideData]);
-
-  return { rideData, startRide, stopRide };
-}import { useRef, useState, useCallback } from 'react';
-import * as Location from 'expo-location';
-import type { LocationObject, LocationSubscription } from 'expo-location';
-import haversine from 'haversine';
 import { primaryPreviewRoutes } from '../constants/trails';
 
 export type RidePoint = {
