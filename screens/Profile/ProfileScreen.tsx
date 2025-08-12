@@ -132,7 +132,7 @@ export default function ProfileScreen() {
           <Icon name="award" size={20} style={{ marginRight: 5 }} />
           <Text style={styles.achievementsTitle}>Achievements</Text>
         </View>
-        <TouchableOpacity activeOpacity={0.7} onPress={() => handleNavigate('AchievementsScreen')} disabled={navDisabled}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => handleNavigate('Achievements')}>
           <Text style={styles.viewMoreText}>View More</Text>
         </TouchableOpacity>
       </View>

@@ -26,7 +26,7 @@ const achievements: Achievement[] = [
     type: 'bronze',
     unlocked: true,
     current: 1,
-    total: 1,
+    total: 3,
     icon: 'bicycle',
   },
   {
@@ -41,6 +41,36 @@ const achievements: Achievement[] = [
   },
   {
     id: '3',
+    title: 'Marathon Rider',
+    description: 'Ride 100 km in total',
+    type: 'gold',
+    unlocked: true,
+    current: 85,
+    total: 100,
+    icon: 'trophy',
+  },
+  {
+    id: '4',
+    title: 'First Ride',
+    description: 'Complete your first ride',
+    type: 'bronze',
+    unlocked: true,
+    current: 1,
+    total: 3,
+    icon: 'bicycle',
+  },
+  {
+    id: '5',
+    title: 'Trail Explorer',
+    description: 'Explore 5 unique trails',
+    type: 'silver',
+    unlocked: false,
+    current: 2,
+    total: 5,
+    icon: 'map-marked-alt',
+  },
+  {
+    id: '6',
     title: 'Marathon Rider',
     description: 'Ride 100 km in total',
     type: 'gold',
@@ -105,9 +135,9 @@ const renderBadgeGradient = (type: Achievement['type']): [string, string] => {
 
         {/* Medals */}
         <View style={styles.medalRow}>
-          <FontAwesome5 name="medal" size={24} color="#B16F07" />
-          <FontAwesome5 name="medal" size={24} color="#B1B1B1" />
-          <FontAwesome5 name="medal" size={24} color="#DD9F00" />
+          <FontAwesome5 name="medal" size={24} color="#FFB0B0" />
+          <FontAwesome5 name="medal" size={24} color="#E8FFA2" />
+          <FontAwesome5 name="medal" size={24} color="#A0FF9D" />
         </View>
       </View>
 
@@ -118,7 +148,8 @@ const renderBadgeGradient = (type: Achievement['type']): [string, string] => {
           keyExtractor={(item) => item.id}
           renderItem={renderAchievementItem}
           scrollEnabled={false}
-        />
+          contentContainerStyle={{paddingBottom: 150,}}>
+        </FlatList>
       </ScrollView>
     </View>
   );
@@ -138,6 +169,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   heading: {
+    marginTop:10,
     fontSize: 15.3,
     fontWeight: 'bold',
   },
