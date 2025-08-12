@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { getRides } from '../../services/RideStorage';
 import RideStatsCard from '../../components/RideStatsCard';
 import type { RideData as BaseRideData } from '../../hooks/useRideTracker';
 import { primaryPreviewRoutes } from '../../constants/trails';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
+import { Colors } from '../../constants/colors';
 
 // Extend RideData locally to include optional routeDistances if the active hook version omits it
 type RideData = BaseRideData & { routeDistances?: Record<string, number> };
@@ -13,6 +14,8 @@ type RideData = BaseRideData & { routeDistances?: Record<string, number> };
 const RideStatsScreen = () => {
   const [rides, setRides] = useState<RideData[]>([]);
   const navigation = useNavigation<any>();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme || 'light'];
 
   useEffect(() => {
     (async () => {
@@ -22,9 +25,11 @@ const RideStatsScreen = () => {
   }, []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.backgroundLight }]}>
       {rides.length === 0 ? (
-        <Text style={styles.empty}>No rides yet. Start a ride from the Mapping tab.</Text>
+        <Text style={[styles.empty, { color: theme.secondary }]}>
+          No rides yet. Start a ride from the Mapping tab.
+        </Text>
       ) : (
         rides.map((ride, i) => {
           const routeLines = primaryPreviewRoutes
@@ -37,7 +42,14 @@ const RideStatsScreen = () => {
           return (
             <TouchableOpacity
               key={ride.startTime + '-' + i}
-              style={styles.card}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: theme.surface,
+                  shadowColor: theme.shadow,
+                  borderColor: theme.border,
+                },
+              ]}
               activeOpacity={0.8}
               onPress={() => navigation.navigate('RideDetail', { startTime: ride.startTime })}
             >
@@ -53,9 +65,11 @@ const RideStatsScreen = () => {
                 </View>
               )}
               {routeLines.length > 0 && (
-                <View style={styles.routesBox}>
+                <View style={[styles.routesBox, { backgroundColor: theme.darkGrey }]}>
                   {routeLines.map((line, idx) => (
-                    <Text key={idx} style={styles.routeLine}>{line}</Text>
+                    <Text key={idx} style={[styles.routeLine, { color: theme.white }]}>
+                      {line}
+                    </Text>
                   ))}
                 </View>
               )}
@@ -97,7 +111,7 @@ function RideMiniMap({ path }: { path: RideData['path'] }) {
       <Polyline
         coordinates={path.map((p) => ({ latitude: p.latitude, longitude: p.longitude }))}
         strokeWidth={3}
-        strokeColor="#1E88E5"
+        strokeColor={Colors.light.primary} // keeps blue in both themes
       />
     </MapView>
   );
@@ -107,12 +121,38 @@ const styles = StyleSheet.create({
   container: {
     padding: 12,
   },
-  empty: { textAlign: 'center', color: '#6B7280', marginTop: 16 },
-  card: { backgroundColor:'#fff', borderRadius:12, padding:12, marginBottom:12, shadowColor:'#000', shadowOpacity:0.08, shadowRadius:6, shadowOffset:{width:0,height:3}, elevation:3 },
-  miniMapWrap: { marginTop: 6, borderRadius: 8, overflow: 'hidden' },
-  miniMap: { width: '100%', height: 120, borderRadius: 8 },
-  routesBox: { marginTop: 4, padding: 8, backgroundColor: '#111', borderRadius: 6 },
-  routeLine: { color: '#fff', fontSize: 12 },
+  empty: {
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  card: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    borderWidth: 1,
+  },
+  miniMapWrap: {
+    marginTop: 6,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  miniMap: {
+    width: '100%',
+    height: 120,
+    borderRadius: 8,
+  },
+  routesBox: {
+    marginTop: 4,
+    padding: 8,
+    borderRadius: 6,
+  },
+  routeLine: {
+    fontSize: 12,
+  },
 });
 
 export default RideStatsScreen;
