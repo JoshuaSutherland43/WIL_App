@@ -88,6 +88,12 @@ const TabNavigator = () => {
           ),
           tabBarLabel: 'Profile',
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            // Always land on ProfileMain when pressing the tab
+            navigation.navigate('ProfileStack', { screen: 'ProfileMain' });
+          },
+        })}
       />
     </Tab.Navigator>
   );

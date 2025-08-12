@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { saveHorse } from '../../services/HorseStorage';
 import { useColorScheme } from 'react-native';
@@ -29,7 +29,17 @@ const CreateHorseScreen = () => {
     try {
       setSaving(true);
       await saveHorse({ name: name.trim(), breed: breed.trim() || undefined, age: ageNum, notes: notes.trim() || undefined });
-      nav.goBack();
+      if (nav.canGoBack()) {
+        nav.goBack();
+      } else {
+        // Hard reset Profile stack to ensure we land on ProfileMain
+        nav.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'ProfileMain' as never }],
+          })
+        );
+      }
     } catch (e) {
       Alert.alert('Save failed', 'Could not save horse. Please try again.');
     } finally {
@@ -41,7 +51,21 @@ const CreateHorseScreen = () => {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => {
+              if (nav.canGoBack()) {
+                nav.goBack();
+              } else {
+                nav.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'ProfileMain' as never }],
+                  })
+                );
+              }
+            }}
+            style={styles.backBtn}
+          >
             <Icon name="chevron-left" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Horse</Text>

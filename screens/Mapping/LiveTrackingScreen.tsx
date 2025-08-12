@@ -6,7 +6,7 @@ import { saveRide } from '../../services/RideStorage';
 import MapViewTracker from '../../components/MapViewTracker';
 import RideStatsCard from '../../components/RideStatsCard';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/colors';
+import { Colors } from '../../constants/colors';
 import TrailPreviews from '../../components/TrailPreviews';
 import { getActiveHorse } from '../../services/HorseStorage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,17 +15,25 @@ const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
   const { rideData, startRide, stopRide } = useRideTracker();
   const [isRiding, setIsRiding] = useState(false);
   const [activeHorseName, setActiveHorseName] = useState<string | null>(null);
+  const pendingStartRef = React.useRef(false);
+  const selectedHorseRef = React.useRef<{ id?: string; name?: string } | null>(null);
 
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
         const horse = await getActiveHorse();
         setActiveHorseName(horse?.name || null);
+        // If user just selected a horse and requested to start, auto-begin now
+        if (!isRiding && pendingStartRef.current && horse) {
+          pendingStartRef.current = false;
+          selectedHorseRef.current = { id: horse.id, name: horse.name };
+          await beginRide();
+        }
       })();
-    }, [])
+    }, [isRiding])
   );
 
-  const handleStart = async () => {
+  const beginRide = async () => {
     setIsRiding(true);
     try {
       await startRide();
@@ -35,9 +43,25 @@ const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
     }
   };
 
+  const handleStart = async () => {
+    // Enforce: Ride -> Select Horse -> Begin
+    const horse = await getActiveHorse();
+    if (!horse) {
+      pendingStartRef.current = true;
+      navigation.navigate('SelectHorse');
+      return;
+    }
+    selectedHorseRef.current = { id: horse.id, name: horse.name };
+    await beginRide();
+  };
+
   const handleStop = async () => {
     const finalRide = stopRide();
-    if (finalRide) await saveRide(finalRide);
+    if (finalRide) {
+      // Persist with horse captured at start
+      const horse = selectedHorseRef.current;
+      await saveRide({ ...finalRide, horseId: horse?.id, horseName: horse?.name });
+    }
     setIsRiding(false);
   };
 
@@ -91,13 +115,7 @@ const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
           </View>
           <View style={styles.footer} pointerEvents="box-none">
             <TouchableOpacity style={[styles.button, styles.freeRideButton]} onPress={handleStart}>
-              <Text style={styles.buttonText}>Free Ride</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.selectHorseButton]}
-              onPress={() => navigation.navigate('SelectHorse')}
-            >
-              <Text style={styles.buttonText}>Select Horse</Text>
+              <Text style={styles.buttonText}>Ride</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.recentButton]}
@@ -179,9 +197,6 @@ const styles = StyleSheet.create({
   freeRideButton: {
     // Figma: pink
     backgroundColor: '#FF7DA4',
-  },
-  selectHorseButton: {
-    backgroundColor: '#89C2FF',
   },
   recentButton: {
     // Figma: amber

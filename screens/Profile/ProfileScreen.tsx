@@ -163,6 +163,27 @@ export default function ProfileScreen() {
         <Text style={styles.myHorsesTxt}>My Horses</Text>
       </TouchableOpacity>
 
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 10 }}>
+        <TouchableOpacity
+          style={styles.featureBtn}
+          activeOpacity={0.85}
+          onPress={() => handleNavigate('SightingsList')}
+          disabled={navDisabled}
+        >
+          <Icon name="eye" size={18} color="#2D2D2D" />
+          <Text style={styles.featureBtnTxt}>Sightings</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.featureBtn}
+          activeOpacity={0.85}
+          onPress={() => handleNavigate('ReportsList')}
+          disabled={navDisabled}
+        >
+          <Icon name="file-text" size={18} color="#2D2D2D" />
+          <Text style={styles.featureBtnTxt}>Reports</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.historyContainer}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <View>
@@ -187,7 +208,7 @@ export default function ProfileScreen() {
                 onPress={() => (navigation as any).navigate('Analytics', { screen: 'RideDetail', params: { startTime: r.startTime } })}
               >
                 <View>
-                  <Text style={styles.historyItemTitle}>Ride #{idx + 1}</Text>
+                  <Text style={styles.historyItemTitle}>Ride #{idx + 1}{r.horseName ? ` • ${r.horseName}` : ''}</Text>
                   <Text style={styles.historyItemSub}>{new Date(r.startTime).toLocaleString()}</Text>
                 </View>
                 <Text style={styles.historyItemStat}>{(r.totalDistance / 1000).toFixed(1)} km</Text>
@@ -237,4 +258,6 @@ const styles = StyleSheet.create({
   addHorseTxt: { color: '#fff', fontWeight: '700', marginLeft: 8 },
   myHorsesBtn: { marginTop: 10, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 8, borderWidth: 1, borderColor: '#E5E7EB' },
   myHorsesTxt: { color: '#2D2D2D', fontWeight: '700', marginLeft: 8 },
+  featureBtn: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 8, borderWidth: 1, borderColor: '#E5E7EB' },
+  featureBtnTxt: { color: '#2D2D2D', fontWeight: '700', marginLeft: 8 },
 });

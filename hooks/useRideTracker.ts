@@ -18,6 +18,9 @@ export type RideData = {
   elevationGain: number; // meters
   duration: number; // ms
   routeDistances?: Record<string, number>; // meters per predefined route id
+  // Association with the horse ridden (optional for backward compatibility)
+  horseId?: string;
+  horseName?: string;
 };
 
 export default function useRideTracker() {

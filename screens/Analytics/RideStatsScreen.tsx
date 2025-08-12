@@ -54,7 +54,7 @@ const RideStatsScreen = () => {
               onPress={() => navigation.navigate('RideDetail', { startTime: ride.startTime })}
             >
               <RideStatsCard
-                title={`Ride #${rides.length - i}`}
+                title={`Ride #${rides.length - i}${ride.horseName ? ` • ${ride.horseName}` : ''}`}
                 distance={ride.totalDistance}
                 elevation={ride.elevationGain}
                 durationMs={ride.duration}
