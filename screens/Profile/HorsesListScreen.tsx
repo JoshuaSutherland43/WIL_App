@@ -1,18 +1,23 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { getHorses, setActiveHorseId, getActiveHorseId, type Horse } from '../../services/HorseStorage';
+import { getHorses, type Horse } from '../../services/HorseStorage';
 
-const SelectHorseScreen = () => {
+const HorsesListScreen = () => {
   const nav = useNavigation<any>();
   const [horses, setHorses] = useState<Horse[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
-    const [list, id] = await Promise.all([getHorses(), getActiveHorseId()]);
-    setHorses(list);
-    setActiveId(id);
+    setLoading(true);
+    try {
+      const list = await getHorses();
+      setHorses(list);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useFocusEffect(
@@ -21,24 +26,21 @@ const SelectHorseScreen = () => {
     }, [])
   );
 
-  const onSelect = async (id: string) => {
-    await setActiveHorseId(id);
-    setActiveId(id);
-    nav.goBack();
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
   };
 
-  const renderItem = ({ item }: { item: Horse }) => {
-    const isActive = item.id === activeId;
-    return (
-      <TouchableOpacity style={[styles.row, isActive && styles.rowActive]} onPress={() => onSelect(item.id)}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{item.name}</Text>
-          <Text style={styles.sub}>{[item.breed, item.age ? `${item.age} yrs` : undefined].filter(Boolean).join(' • ') || '—'}</Text>
-        </View>
-        {isActive ? <Icon name="check" size={18} color="#10B981" /> : <Icon name="chevron-right" size={18} color="#6B7280" />}
-      </TouchableOpacity>
-    );
-  };
+  const renderItem = ({ item }: { item: Horse }) => (
+    <View style={styles.row}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.title}>{item.name}</Text>
+        <Text style={styles.sub}>{[item.breed, item.age ? `${item.age} yrs` : undefined].filter(Boolean).join(' • ') || '—'}</Text>
+      </View>
+      <Text style={styles.meta}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -46,8 +48,8 @@ const SelectHorseScreen = () => {
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
           <Icon name="chevron-left" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Select Horse</Text>
-        <TouchableOpacity onPress={() => nav.navigate('ProfileStack', { screen: 'CreateHorse' })} style={styles.addBtn}>
+        <Text style={styles.headerTitle}>My Horses</Text>
+        <TouchableOpacity onPress={() => nav.navigate('CreateHorse')} style={styles.addBtn}>
           <Icon name="plus" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -57,14 +59,15 @@ const SelectHorseScreen = () => {
         keyExtractor={(h) => h.id}
         renderItem={renderItem}
         contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 24 }}
-        ListEmptyComponent={
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={!loading ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No horses yet.</Text>
-            <TouchableOpacity style={styles.cta} onPress={() => nav.navigate('ProfileStack', { screen: 'CreateHorse' })}>
-              <Text style={styles.ctaText}>Add a horse</Text>
+            <TouchableOpacity style={styles.cta} onPress={() => nav.navigate('CreateHorse')}>
+              <Text style={styles.ctaText}>Add your first horse</Text>
             </TouchableOpacity>
           </View>
-        }
+        ) : null}
       />
     </View>
   );
@@ -77,14 +80,13 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '700' },
   addBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2D2D2D' },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', marginTop: 12, borderRadius: 16, padding: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-  rowActive: { borderWidth: 1, borderColor: '#10B981' },
   title: { fontSize: 16, fontWeight: '600' },
   sub: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  meta: { fontSize: 12, color: '#6B7280' },
   empty: { alignItems: 'center', marginTop: 40 },
   emptyText: { color: '#6B7280', marginBottom: 12 },
   cta: { backgroundColor: '#2D2D2D', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10 },
   ctaText: { color: '#fff', fontWeight: '700' },
 });
 
-export default SelectHorseScreen;
-
+export default HorsesListScreen;

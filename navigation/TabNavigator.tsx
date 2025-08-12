@@ -5,9 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import ProfileStack from './ProfileStack';
 // Screens
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
-import LiveTrackingScreen from '../screens/Mapping/LiveTrackingScreen';
+import MappingStack from './MappingStack';
 import SosAlertScreen from '../screens/Sos/SosAlertScreen';
-import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
+import AnalyticsStack from './AnalyticsStack';
 // import SettingsScreen from '../screens/Profile/SettingsScreen'; // (unused currently)
 import { Colors } from '../constants/colors';
 
@@ -46,7 +46,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Mapping"
-        component={LiveTrackingScreen}
+        component={MappingStack}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="map-outline" color={color} size={24} />
@@ -69,7 +69,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Analytics"
-        component={RideStatsScreen}
+        component={AnalyticsStack}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="stats-chart" color={color} size={24} />

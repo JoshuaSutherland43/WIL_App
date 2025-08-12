@@ -8,10 +8,22 @@ import RideStatsCard from '../../components/RideStatsCard';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/colors';
 import TrailPreviews from '../../components/TrailPreviews';
+import { getActiveHorse } from '../../services/HorseStorage';
+import { useFocusEffect } from '@react-navigation/native';
 
 const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
   const { rideData, startRide, stopRide } = useRideTracker();
   const [isRiding, setIsRiding] = useState(false);
+  const [activeHorseName, setActiveHorseName] = useState<string | null>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      (async () => {
+        const horse = await getActiveHorse();
+        setActiveHorseName(horse?.name || null);
+      })();
+    }, [])
+  );
 
   const handleStart = async () => {
     setIsRiding(true);
@@ -82,11 +94,22 @@ const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
               <Text style={styles.buttonText}>Free Ride</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              style={[styles.button, styles.selectHorseButton]}
+              onPress={() => navigation.navigate('SelectHorse')}
+            >
+              <Text style={styles.buttonText}>Select Horse</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.button, styles.recentButton]}
               onPress={() => navigation.navigate('Analytics')}
             >
               <Text style={styles.buttonText}>Recent</Text>
             </TouchableOpacity>
+          </View>
+          <View style={styles.activeHorseBar}>
+            <Text style={styles.activeHorseText}>
+              {activeHorseName ? `Active horse: ${activeHorseName}` : 'No horse selected'}
+            </Text>
           </View>
         </>
       )}
@@ -157,6 +180,9 @@ const styles = StyleSheet.create({
     // Figma: pink
     backgroundColor: '#FF7DA4',
   },
+  selectHorseButton: {
+    backgroundColor: '#89C2FF',
+  },
   recentButton: {
     // Figma: amber
     backgroundColor: '#F2B270',
@@ -180,6 +206,21 @@ const styles = StyleSheet.create({
   stopButton: {
     backgroundColor: '#e53935',
     marginHorizontal: 20,
+  },
+  activeHorseBar: {
+    position: 'absolute',
+    bottom: Platform.select({ ios: 120, android: 100, default: 100 }),
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  activeHorseText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 
