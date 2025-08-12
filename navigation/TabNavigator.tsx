@@ -59,7 +59,8 @@ const TabNavigator = () => {
         component={SosAlertScreen}
         options={{
           tabBarIcon: () => (
-            <View>
+            <View style={styles.sosIconContainer}>
+              <Ionicons name="warning" color="#FFFFFF" size={24} />
               <Text style={styles.sosText}>SOS</Text>
             </View>
           ),
@@ -97,13 +98,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    marginBottom:0,
+    marginBottom:3,
     right: 0,
     backgroundColor: '#FFFFFF',
-    height: 110,
+    height: 105,
     paddingHorizontal: 8,
     paddingBottom:1,
-    paddingTop: 8,
+    paddingTop: 3,
     borderTopWidth: 0,
   },
   label: {
@@ -115,33 +116,41 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   sosButtonWrapper: {
-    top: -5,
+    top: 7,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
   },
+
   sosButton: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     borderRadius: 35,
-    backgroundColor: '#FF3535',
+    backgroundColor: '#FF6B47',
+    marginBottom: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    paddingBottom: 0,
+  },
+  sosIconContainer: {
+    marginTop:0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sosText: {
     color: '#FFFFFF',
-    marginTop:10,
-    fontSize: 12,
-    fontFamily:'Poppins',
-    alignItems:'center',
+    fontSize: 13,
     fontWeight: 'bold',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
+    marginTop: 0,
   },
 });
 
