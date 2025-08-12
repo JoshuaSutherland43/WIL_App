@@ -224,7 +224,7 @@ export default function AnalyticsScreen() {
           <View style={styles.titleContainer}>
             <Ionicons name="stats-chart" size={24} color={colors.primary} />
             <ThemedText type="title" style={[styles.title, { color: colors.text }]}>
-              Ride Analytics
+              User Analytics
             </ThemedText>
           </View>
           
