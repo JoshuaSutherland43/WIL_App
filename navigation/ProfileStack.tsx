@@ -7,6 +7,7 @@ import PersonalStatsScreen from '../screens/Profile/PersonalStatsScreen';
 import SettingsScreen from '../screens/Profile/SettingsScreen';
 import CreateHorseScreen from '../screens/Profile/CreateHorseScreen';
 import HorsesListScreen from '../screens/Profile/HorsesListScreen';
+import AchievementsScreen from '../screens/Profile/AchievementsScreen';
 
 const Stack = createStackNavigator();
 
@@ -17,6 +18,7 @@ const ProfileStack = () => {
       <Stack.Screen name="PersonalStats" component={PersonalStatsScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="CreateHorse" component={CreateHorseScreen} />
+      <Stack.Screen name="Achievements" component={AchievementsScreen} />
       <Stack.Screen name="HorsesList" component={HorsesListScreen} />
       {/* Add more profile screens as needed */}
     </Stack.Navigator>
