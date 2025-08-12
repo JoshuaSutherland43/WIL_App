@@ -6,6 +6,7 @@ const DashboardScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+
         {/* Header */}
         <View style={styles.topIcons}>
           <TouchableOpacity activeOpacity={0.7}>
@@ -174,7 +175,8 @@ const styles = StyleSheet.create({
   },
   topIcons: {
     flexDirection: 'row',
-    paddingTop: 10,
+    paddingTop: 45,
+
     justifyContent: 'space-between',
     marginBottom: 16,
     paddingHorizontal: 16,
