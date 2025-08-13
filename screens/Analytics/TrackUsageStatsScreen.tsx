@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,199 +7,489 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  ActivityIndicator,
+  RefreshControl,
+  Animated,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { PieChart, BarChart } from 'react-native-chart-kit';
+import MapView, { Marker, Polyline, Heatmap } from 'react-native-maps';
+import { analyticsService } from '../../services/firebase';
 
 const { width: screenWidth } = Dimensions.get('window');
 
+interface TopRider {
+  userId: string;
+  userName: string;
+  totalDistance: number;
+  totalRides: number;
+  avatar: string | null;
+}
+
+interface HorseUsage {
+  horseId: string;
+  horseName: string;
+  totalDistance: number;
+  totalRides: number;
+  totalDuration: number;
+}
+
+interface TrailData {
+  id: string;
+  name: string;
+  distance: number;
+  difficulty: string;
+  popularity: number;
+  coordinates: any[];
+  rideCount: number;
+}
+
 const TrackUsageStatsScreen = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [topRiders, setTopRiders] = useState<TopRider[]>([]);
+  const [horseUsage, setHorseUsage] = useState<HorseUsage[]>([]);
+  const [trailData, setTrailData] = useState<TrailData[]>([]);
+  const [selectedTab, setSelectedTab] = useState<'riders' | 'horses' | 'trails'>('riders');
+  
+  const fadeAnim = new Animated.Value(0);
+  const slideAnim = new Animated.Value(50);
 
-  const topRiders = [
-    { name: 'Josh', distance: '14km', avatar: null, rides: 12 },
-    { name: 'Caleb', distance: '8km', avatar: null, rides: 8 },
-    { name: 'Kyle', distance: '5km', avatar: null, rides: 5 },
-    { name: 'Sarah', distance: '4km', avatar: null, rides: 4 },
-    { name: 'Mike', distance: '3km', avatar: null, rides: 3 },
-  ];
+  useEffect(() => {
+    fetchUsageData();
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [selectedPeriod]);
 
-  const horseUsage = [
-    { name: 'Thunder', uses: 15, totalDistance: '45km', avgSpeed: '12km/h' },
-    { name: 'Lightning', uses: 12, totalDistance: '38km', avgSpeed: '11km/h' },
-    { name: 'Storm', uses: 10, totalDistance: '32km', avgSpeed: '10km/h' },
-    { name: 'Blaze', uses: 8, totalDistance: '25km', avgSpeed: '13km/h' },
-  ];
+  const fetchUsageData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all data in parallel
+      const [rideStats, horses, trails] = await Promise.all([
+        analyticsService.getRideStats('', selectedPeriod), // '' or provide userId if needed
+        analyticsService.getHorseUsageStats(selectedPeriod),
+        analyticsService.getTrailPopularity(),
+      ]);
 
-  const trailData = [
-    { name: 'Forest Trail', popularity: 85, distance: '5.2km', difficulty: 'Medium' },
-    { name: 'Lake Loop', popularity: 72, distance: '3.8km', difficulty: 'Easy' },
-    { name: 'Mountain Path', popularity: 65, distance: '7.5km', difficulty: 'Hard' },
-    { name: 'Valley Route', popularity: 58, distance: '4.3km', difficulty: 'Medium' },
-  ];
+      // Process rideStats to get top riders
+      const riderMap: { [userId: string]: TopRider } = {};
+      rideStats.forEach((ride: any) => {
+        const { userId, userName, distance, avatar } = ride;
+        if (!riderMap[userId]) {
+          riderMap[userId] = {
+            userId,
+            userName,
+            totalDistance: 0,
+            totalRides: 0,
+            avatar: avatar || null,
+          };
+        }
+        riderMap[userId].totalDistance += distance || 0;
+        riderMap[userId].totalRides += 1;
+      });
+      const riders: TopRider[] = Object.values(riderMap)
+        .sort((a, b) => b.totalDistance - a.totalDistance)
+        .slice(0, 10);
+
+      setTopRiders(riders);
+      setHorseUsage(horses);
+      setTrailData(trails);
+      
+    } catch (error) {
+      console.error('Error fetching usage data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchUsageData();
+  };
+
+  const renderPieChart = () => {
+    const data = horseUsage.slice(0, 5).map((horse, index) => ({
+      name: horse.horseName,
+      uses: horse.totalRides,
+      color: ['#4CAF50', '#81C784', '#66BB6A', '#A5D6A7', '#C8E6C9'][index],
+      legendFontColor: '#333',
+      legendFontSize: 12,
+    }));
+
+    return (
+      <PieChart
+        data={data}
+        width={screenWidth - 40}
+        height={220}
+        chartConfig={{
+          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        }}
+        accessor="uses"
+        backgroundColor="transparent"
+        paddingLeft="15"
+        absolute
+      />
+    );
+  };
+
+  const renderBarChart = () => {
+    const data = {
+      labels: horseUsage.slice(0, 6).map(h => h.horseName.substring(0, 3)),
+      datasets: [
+        {
+          data: horseUsage.slice(0, 6).map(h => h.totalDistance),
+        },
+      ],
+    };
+
+    return (
+      <BarChart
+        data={data}
+        width={screenWidth - 40}
+        height={200}
+        yAxisLabel=""
+        yAxisSuffix=" km"
+        chartConfig={{
+          backgroundColor: '#fff',
+          backgroundGradientFrom: '#fff',
+          backgroundGradientTo: '#fff',
+          decimalPlaces: 0,
+          color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          barPercentage: 0.8,
+        }}
+        style={styles.barChart}
+        fromZero
+        showBarTops
+      />
+    );
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Loading Usage Statistics...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="arrow-back" size={28} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Track & Usage Stats</Text>
-        <TouchableOpacity>
-          <Ionicons name="filter-outline" size={28} color="#000" />
-        </TouchableOpacity>
-      </View>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#4CAF50']}
+        />
+      }
+    >
+      <Animated.View 
+        style={{ 
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity>
+            <Ionicons name="arrow-back" size={28} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Track & Usage Stats</Text>
+          <TouchableOpacity>
+            <Ionicons name="filter-outline" size={28} color="#000" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Period Selector */}
-      <View style={styles.periodSelector}>
-        {['Weekly', 'Monthly', 'Yearly'].map((period) => (
-          <TouchableOpacity
-            key={period}
-            style={[
-              styles.periodButton,
-              selectedPeriod === period && styles.periodButtonActive,
-            ]}
-            onPress={() => setSelectedPeriod(period)}
-          >
-            <Text
+        {/* Period Selector */}
+        <View style={styles.periodSelector}>
+          {(['weekly', 'monthly', 'yearly'] as const).map((period) => (
+            <TouchableOpacity
+              key={period}
               style={[
-                styles.periodText,
-                selectedPeriod === period && styles.periodTextActive,
+                styles.periodButton,
+                selectedPeriod === period && styles.periodButtonActive,
               ]}
+              onPress={() => setSelectedPeriod(period)}
             >
-              {period}
+              <Text
+                style={[
+                  styles.periodText,
+                  selectedPeriod === period && styles.periodTextActive,
+                ]}
+              >
+                {period.charAt(0).toUpperCase() + period.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tab Selector */}
+        <View style={styles.tabSelector}>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'riders' && styles.activeTab]}
+            onPress={() => setSelectedTab('riders')}
+          >
+            <Ionicons 
+              name="people" 
+              size={20} 
+              color={selectedTab === 'riders' ? '#4CAF50' : '#999'} 
+            />
+            <Text style={[styles.tabText, selectedTab === 'riders' && styles.activeTabText]}>
+              Riders
             </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Top Riders Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>TOP RIDERS</Text>
-          <TouchableOpacity>
-            <Text style={styles.viewAll}>View All</Text>
+          
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'horses' && styles.activeTab]}
+            onPress={() => setSelectedTab('horses')}
+          >
+            <MaterialCommunityIcons 
+              name="horse" 
+              size={20} 
+              color={selectedTab === 'horses' ? '#4CAF50' : '#999'} 
+            />
+            <Text style={[styles.tabText, selectedTab === 'horses' && styles.activeTabText]}>
+              Horses
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'trails' && styles.activeTab]}
+            onPress={() => setSelectedTab('trails')}
+          >
+            <Ionicons 
+              name="trail-sign" 
+              size={20} 
+              color={selectedTab === 'trails' ? '#4CAF50' : '#999'} 
+            />
+            <Text style={[styles.tabText, selectedTab === 'trails' && styles.activeTabText]}>
+              Trails
+            </Text>
           </TouchableOpacity>
         </View>
-        {topRiders.map((rider, index) => {
-          return (
-            <React.Fragment key={`rider-${index}`}>
-              <View style={styles.riderRow}>
-                <Text style={styles.rank}>{index + 1}</Text>
-                <View style={styles.avatar}>
-                  {rider.avatar ? (
-                    <Image source={{ uri: rider.avatar }} style={styles.avatarImage} />
-                  ) : (
-                    <Ionicons name="person-circle" size={40} color="#e0e0e0" />
-                  )}
-                </View>
-                <View style={styles.riderInfo}>
-                  <Text style={styles.riderName}>{rider.name}</Text>
-                  <Text style={styles.riderStats}>{rider.rides} rides</Text>
-                </View>
-                <Text style={styles.riderDistance}>{rider.distance}</Text>
+
+        {/* Top Riders Section */}
+        {selectedTab === 'riders' && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>TOP RIDERS</Text>
+                <TouchableOpacity>
+                  <Text style={styles.viewAll}>View All</Text>
+                </TouchableOpacity>
               </View>
-            </React.Fragment>
-          );
-        })}
-      </View>
-
-      {/* Horse Usage Statistics */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>HORSE USAGE STATISTICS</Text>
-        <View style={styles.horseGrid}>
-          {horseUsage.map((horse, index) => {
-            return (
-              <React.Fragment key={`horse-${index}`}>
-                <View style={styles.horseCard}>
-                  <MaterialCommunityIcons name="horse" size={32} color="#81C784" />
-                  <Text style={styles.horseName}>{horse.name}</Text>
-                  <View style={styles.horseStats}>
-                    <Text style={styles.horseStatLabel}>Uses</Text>
-                    <Text style={styles.horseStatValue}>{horse.uses}</Text>
-                  </View>
-                  <View style={styles.horseStats}>
-                    <Text style={styles.horseStatLabel}>Distance</Text>
-                    <Text style={styles.horseStatValue}>{horse.totalDistance}</Text>
-                  </View>
-                  <View style={styles.horseStats}>
-                    <Text style={styles.horseStatLabel}>Avg Speed</Text>
-                    <Text style={styles.horseStatValue}>{horse.avgSpeed}</Text>
-                  </View>
-                </View>
-              </React.Fragment>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Trail Popularity */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>TRAIL POPULARITY</Text>
-        <View style={styles.mapContainer}>
-          <View style={styles.mapPlaceholder}>
-            <View style={styles.trailPath1} />
-            <View style={styles.trailPath2} />
-            <View style={styles.trailPath3} />
-            <View style={styles.mapPoint1}>
-              <View style={styles.mapPointInner} />
+              {topRiders.map((rider, index) => {
+                return (
+                  <React.Fragment key={`rider-${rider.userId}`}>
+                    <TouchableOpacity style={styles.riderRow} activeOpacity={0.7}>
+                      <View style={styles.rankContainer}>
+                        <Text style={styles.rank}>{index + 1}</Text>
+                        {index < 3 && (
+                          <Ionicons 
+                            name="trophy" 
+                            size={16} 
+                            color={index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : '#CD7F32'} 
+                          />
+                        )}
+                      </View>
+                      <View style={styles.avatar}>
+                        {rider.avatar ? (
+                          <Image source={{ uri: rider.avatar }} style={styles.avatarImage} />
+                        ) : (
+                          <Ionicons name="person-circle" size={40} color="#e0e0e0" />
+                        )}
+                      </View>
+                      <View style={styles.riderInfo}>
+                        <Text style={styles.riderName}>{rider.userName}</Text>
+                        <Text style={styles.riderStats}>{rider.totalRides} rides</Text>
+                      </View>
+                      <View style={styles.distanceContainer}>
+                        <Text style={styles.riderDistance}>{rider.totalDistance.toFixed(1)}km</Text>
+                        <View style={styles.progressBar}>
+                          <View 
+                            style={[
+                              styles.progressFill, 
+                              { width: `${Math.min((rider.totalDistance / topRiders[0]?.totalDistance) * 100, 100)}%` }
+                            ]} 
+                          />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </React.Fragment>
+                );
+              })}
             </View>
-            <View style={styles.mapPoint2}>
-              <View style={styles.mapPointInner} />
-            </View>
-          </View>
-        </View>
-        {trailData.map((trail, index) => {
-          return (
-            <React.Fragment key={`trail-${index}`}>
-              <View style={styles.trailItem}>
-                <View style={styles.trailLeft}>
-                  <Text style={styles.trailName}>{trail.name}</Text>
-                  <View style={styles.trailDetails}>
-                    <Text style={styles.trailDistance}>{trail.distance}</Text>
-                    <Text style={styles.trailDifficulty}>{trail.difficulty}</Text>
-                  </View>
-                </View>
-                <View style={styles.trailRight}>
-                  <View style={styles.popularityBar}>
-                    <View
-                      style={[
-                        styles.popularityFill,
-                        { width: `${trail.popularity}%` },
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.popularityText}>{trail.popularity}%</Text>
-                </View>
+          </Animated.View>
+        )}
+
+        {/* Horse Usage Statistics */}
+        {selectedTab === 'horses' && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>HORSE USAGE STATISTICS</Text>
+              
+              {/* Pie Chart */}
+              <View style={styles.chartContainer}>
+                <Text style={styles.chartTitle}>Usage Distribution</Text>
+                {horseUsage.length > 0 && renderPieChart()}
               </View>
-            </React.Fragment>
-          );
-        })}
-      </View>
+              
+              {/* Bar Chart */}
+              <View style={styles.chartContainer}>
+                <Text style={styles.chartTitle}>Distance Covered</Text>
+                {horseUsage.length > 0 && renderBarChart()}
+              </View>
+              
+              {/* Horse Cards Grid */}
+              <View style={styles.horseGrid}>
+                {horseUsage.slice(0, 4).map((horse, index) => {
+                  return (
+                    <React.Fragment key={`horse-${horse.horseId}`}>
+                      <TouchableOpacity style={styles.horseCard} activeOpacity={0.8}>
+                        <View style={styles.horseIconContainer}>
+                          <MaterialCommunityIcons name="horse" size={32} color="#fff" />
+                        </View>
+                        <Text style={styles.horseName}>{horse.horseName}</Text>
+                        <View style={styles.horseStats}>
+                          <Text style={styles.horseStatLabel}>Uses</Text>
+                          <Text style={styles.horseStatValue}>{horse.totalRides}</Text>
+                        </View>
+                        <View style={styles.horseStats}>
+                          <Text style={styles.horseStatLabel}>Distance</Text>
+                          <Text style={styles.horseStatValue}>{horse.totalDistance.toFixed(1)}km</Text>
+                        </View>
+                        <View style={styles.horseStats}>
+                          <Text style={styles.horseStatLabel}>Duration</Text>
+                          <Text style={styles.horseStatValue}>{Math.round(horse.totalDuration)}min</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </React.Fragment>
+                  );
+                })}
+              </View>
+            </View>
+          </Animated.View>
+        )}
 
-      {/* Usage Summary */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>USAGE SUMMARY</Text>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Ionicons name="people" size={24} color="#81C784" />
-            <Text style={styles.summaryValue}>45</Text>
-            <Text style={styles.summaryLabel}>Active Riders</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <MaterialCommunityIcons name="horse" size={24} color="#81C784" />
-            <Text style={styles.summaryValue}>12</Text>
-            <Text style={styles.summaryLabel}>Horses Used</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Ionicons name="trail-sign" size={24} color="#81C784" />
-            <Text style={styles.summaryValue}>8</Text>
-            <Text style={styles.summaryLabel}>Trails Active</Text>
+        {/* Trail Popularity */}
+        {selectedTab === 'trails' && (
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>TRAIL POPULARITY</Text>
+              
+              {/* Map View */}
+              <View style={styles.mapContainer}>
+                <MapView
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: 37.78825,
+                    longitude: -122.4324,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                  }}
+                >
+                  {trailData.map((trail) => (
+                    <Marker
+                      key={trail.id}
+                      coordinate={{
+                        latitude: trail.coordinates?.[0]?.latitude || 37.78825,
+                        longitude: trail.coordinates?.[0]?.longitude || -122.4324,
+                      }}
+                      title={trail.name}
+                      description={`Popularity: ${trail.popularity}%`}
+                    >
+                      <View style={styles.markerContainer}>
+                        <Text style={styles.markerText}>{trail.popularity}%</Text>
+                      </View>
+                    </Marker>
+                  ))}
+                </MapView>
+              </View>
+              
+              {/* Trail List */}
+              {trailData.map((trail, index) => {
+                return (
+                  <React.Fragment key={`trail-${trail.id}`}>
+                    <TouchableOpacity style={styles.trailItem} activeOpacity={0.7}>
+                      <View style={styles.trailLeft}>
+                        <Text style={styles.trailName}>{trail.name}</Text>
+                        <View style={styles.trailDetails}>
+                          <View style={styles.trailBadge}>
+                            <Ionicons name="navigate" size={12} color="#666" />
+                            <Text style={styles.trailDistance}>{trail.distance}km</Text>
+                          </View>
+                          <View style={[styles.trailBadge, styles.difficultyBadge]}>
+                            <Text style={styles.trailDifficulty}>{trail.difficulty}</Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.trailRight}>
+                        <Text style={styles.rideCount}>{trail.rideCount} rides</Text>
+                        <View style={styles.popularityBar}>
+                          <View
+                            style={[
+                              styles.popularityFill,
+                              { width: `${trail.popularity}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.popularityText}>{trail.popularity}%</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Usage Summary */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>USAGE SUMMARY</Text>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryIconContainer}>
+                <Ionicons name="people" size={24} color="#fff" />
+              </View>
+              <Text style={styles.summaryValue}>{topRiders.length}</Text>
+              <Text style={styles.summaryLabel}>Active Riders</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryIconContainer}>
+                <MaterialCommunityIcons name="horse" size={24} color="#fff" />
+              </View>
+              <Text style={styles.summaryValue}>{horseUsage.length}</Text>
+              <Text style={styles.summaryLabel}>Horses Used</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryIconContainer}>
+                <Ionicons name="trail-sign" size={24} color="#fff" />
+              </View>
+              <Text style={styles.summaryValue}>{trailData.length}</Text>
+              <Text style={styles.summaryLabel}>Trails Active</Text>
+            </View>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </ScrollView>
   );
 };
@@ -209,6 +499,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -217,6 +518,11 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
     backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 20,
@@ -231,12 +537,17 @@ const styles = StyleSheet.create({
   },
   periodButton: {
     paddingHorizontal: 25,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
     backgroundColor: '#F0F0F0',
   },
   periodButtonActive: {
-    backgroundColor: '#81C784',
+    backgroundColor: '#4CAF50',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   periodText: {
     fontSize: 14,
@@ -246,10 +557,50 @@ const styles = StyleSheet.create({
   periodTextActive: {
     color: '#fff',
   },
+  tabSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    marginTop: 10,
+    marginHorizontal: 15,
+    borderRadius: 15,
+    padding: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  activeTab: {
+    backgroundColor: '#E8F5E9',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#999',
+    marginLeft: 5,
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: '#4CAF50',
+  },
   section: {
     backgroundColor: '#fff',
     marginTop: 10,
     padding: 20,
+    marginHorizontal: 15,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -261,34 +612,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
+    letterSpacing: 0.5,
   },
   viewAll: {
     fontSize: 14,
-    color: '#81C784',
+    color: '#4CAF50',
+    fontWeight: '600',
   },
   riderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
+  rankContainer: {
+    width: 35,
+    alignItems: 'center',
+  },
   rank: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#666',
-    width: 30,
+    color: '#333',
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
     marginRight: 12,
+    backgroundColor: '#F0F0F0',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 20,
+    borderRadius: 22.5,
   },
   riderInfo: {
     flex: 1,
@@ -296,119 +653,124 @@ const styles = StyleSheet.create({
   riderName: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#333',
   },
   riderStats: {
     fontSize: 12,
     color: '#999',
+    marginTop: 2,
+  },
+  distanceContainer: {
+    alignItems: 'flex-end',
   },
   riderDistance: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#81C784',
+    color: '#4CAF50',
+  },
+  progressBar: {
+    width: 60,
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    marginTop: 5,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+    borderRadius: 2,
+  },
+  chartContainer: {
+    marginVertical: 15,
+    alignItems: 'center',
+  },
+  chartTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  barChart: {
+    borderRadius: 16,
   },
   horseGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -5,
+    marginTop: 15,
   },
   horseCard: {
-    width: (screenWidth - 50) / 2,
-    backgroundColor: '#F8F8F8',
+    width: (screenWidth - 70) / 2,
+    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     padding: 15,
     margin: 5,
-    borderRadius: 12,
+    borderRadius: 15,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E8F5E9',
+  },
+  horseIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
   horseName: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 8,
+    color: '#333',
     marginBottom: 10,
   },
   horseStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 2,
+    marginVertical: 3,
   },
   horseStatLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
+    fontWeight: '500',
   },
   horseStatValue: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#333',
   },
   mapContainer: {
+    height: 250,
     marginVertical: 15,
-  },
-  mapPlaceholder: {
-    height: 200,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 12,
-    position: 'relative',
+    borderRadius: 15,
     overflow: 'hidden',
   },
-  trailPath1: {
-    position: 'absolute',
-    width: 150,
-    height: 3,
-    backgroundColor: '#81C784',
-    top: 50,
-    left: 30,
-    transform: [{ rotate: '25deg' }],
+  map: {
+    flex: 1,
   },
-  trailPath2: {
-    position: 'absolute',
-    width: 120,
-    height: 3,
-    backgroundColor: '#66BB6A',
-    top: 100,
-    right: 40,
-    transform: [{ rotate: '-15deg' }],
-  },
-  trailPath3: {
-    position: 'absolute',
-    width: 100,
-    height: 3,
+  markerContainer: {
     backgroundColor: '#4CAF50',
-    bottom: 60,
-    left: 60,
-    transform: [{ rotate: '45deg' }],
+    padding: 5,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
-  mapPoint1: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    top: 80,
-    left: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapPoint2: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    bottom: 50,
-    right: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapPointInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#4CAF50',
+  markerText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   trailItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -418,23 +780,41 @@ const styles = StyleSheet.create({
   trailName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    color: '#333',
+    marginBottom: 6,
   },
   trailDetails: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+  },
+  trailBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  difficultyBadge: {
+    backgroundColor: '#E8F5E9',
   },
   trailDistance: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
+    marginLeft: 4,
   },
   trailDifficulty: {
-    fontSize: 12,
-    color: '#81C784',
+    fontSize: 11,
+    color: '#4CAF50',
     fontWeight: '600',
   },
   trailRight: {
     alignItems: 'flex-end',
+  },
+  rideCount: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
   },
   popularityBar: {
     width: 100,
@@ -445,24 +825,31 @@ const styles = StyleSheet.create({
   },
   popularityFill: {
     height: '100%',
-    backgroundColor: '#81C784',
+    backgroundColor: '#4CAF50',
     borderRadius: 3,
   },
   popularityText: {
     fontSize: 12,
-    color: '#666',
+    color: '#333',
+    fontWeight: '600',
   },
   summaryCard: {
     backgroundColor: '#fff',
-    margin: 20,
+    margin: 15,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   summaryTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    letterSpacing: 0.5,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -473,20 +860,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  summaryIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
   summaryValue: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#333',
     marginVertical: 5,
   },
   summaryLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
+    textAlign: 'center',
   },
   summaryDivider: {
     width: 1,
-    height: 60,
+    height: 80,
     backgroundColor: '#E0E0E0',
+    marginHorizontal: 10,
   },
 });
-
 export default TrackUsageStatsScreen;
