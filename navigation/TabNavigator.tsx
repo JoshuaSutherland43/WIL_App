@@ -1,15 +1,20 @@
 import React, { ReactNode } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+
+//Icons import
 import { Ionicons } from '@expo/vector-icons';
-import ProfileStack from './ProfileStack';
+import ProfileStack from './ProfileStack'; // <-- import at top
+
 // Screens
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
-import MappingStack from './MappingStack';
+import LiveTrackingScreen from '../screens/Mapping/LiveTrackingScreen';
 import SosAlertScreen from '../screens/Sos/SosAlertScreen';
-import AnalyticsStack from './AnalyticsStack';
-// import SettingsScreen from '../screens/Profile/SettingsScreen'; // (unused currently)
+import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
+import SettingsScreen from '../screens/Profile/SettingsScreen';
+
 import { Colors } from '../constants/colors';
+import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,7 +51,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Mapping"
-        component={MappingStack}
+        component={LiveTrackingScreen}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="map-outline" color={color} size={24} />
@@ -59,8 +64,7 @@ const TabNavigator = () => {
         component={SosAlertScreen}
         options={{
           tabBarIcon: () => (
-            <View style={styles.sosIconContainer}>
-              <Ionicons name="warning" color="#FFFFFF" size={24} />
+            <View>
               <Text style={styles.sosText}>SOS</Text>
             </View>
           ),
@@ -70,7 +74,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Analytics"
-        component={AnalyticsStack}
+        component={RideStatsScreen}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="stats-chart" color={color} size={24} />
@@ -98,13 +102,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    marginBottom:3,
+    marginBottom:0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    height: 105,
+    height: 110,
     paddingHorizontal: 8,
     paddingBottom:1,
-    paddingTop: 3,
+    paddingTop: 8,
     borderTopWidth: 0,
   },
   label: {
@@ -116,41 +120,33 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   sosButtonWrapper: {
-    top: 7,
+    top: -5,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
   },
-
   sosButton: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 35,
-    backgroundColor: '#FF6B47',
-    marginBottom: 100,
+    backgroundColor: '#FF3535',
     alignItems: 'center',
     justifyContent: 'center',
+    
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    paddingBottom: 0,
-  },
-  sosIconContainer: {
-    marginTop:0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   sosText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    marginTop:10,
+    fontSize: 12,
+    fontFamily:'Poppins',
+    alignItems:'center',
     fontWeight: 'bold',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginTop: 0,
   },
 });
 
