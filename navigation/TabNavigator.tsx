@@ -8,7 +8,7 @@ import ProfileStack from './ProfileStack'; // <-- import at top
 
 // Screens
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
-import LiveTrackingScreen from '../screens/Mapping/LiveTrackingScreen';
+import MappingStack from './MappingStack';
 import SosAlertScreen from '../screens/Sos/SosAlertScreen';
 import RideStatsScreen from '../screens/Analytics/RideStatsScreen';
 import SettingsScreen from '../screens/Profile/SettingsScreen';
@@ -51,7 +51,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Mapping"
-        component={LiveTrackingScreen}
+        component={MappingStack}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name="map-outline" color={color} size={24} />

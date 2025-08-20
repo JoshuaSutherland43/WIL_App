@@ -6,7 +6,6 @@ import { saveRide } from '../../services/RideStorage';
 import MapViewTracker from '../../components/MapViewTracker';
 import RideStatsCard from '../../components/RideStatsCard';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/colors';
 import TrailPreviews from '../../components/TrailPreviews';
 import { getActiveHorse } from '../../services/HorseStorage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -26,6 +25,12 @@ const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
   );
 
   const handleStart = async () => {
+    // Enforce horse selection before ride start
+    const horse = await getActiveHorse();
+    if (!horse) {
+      navigation.navigate('SelectHorse');
+      return;
+    }
     setIsRiding(true);
     try {
       await startRide();
@@ -106,11 +111,19 @@ const LiveTrackingScreen = ({ navigation }: { navigation: any }) => {
               <Text style={styles.buttonText}>Recent</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.activeHorseBar}>
-            <Text style={styles.activeHorseText}>
-              {activeHorseName ? `Active horse: ${activeHorseName}` : 'No horse selected'}
-            </Text>
-          </View>
+          {activeHorseName ? (
+            <View style={styles.activeHorseBar}>
+              <Text style={styles.activeHorseText}>Active horse: {activeHorseName}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.activeHorseBar}
+              onPress={() => navigation.navigate('SelectHorse')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.activeHorseText}>No horse selected • Tap to choose</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
     </View>

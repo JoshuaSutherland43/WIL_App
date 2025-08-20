@@ -6,7 +6,7 @@ import type { RideData as BaseRideData } from '../../hooks/useRideTracker';
 import { primaryPreviewRoutes } from '../../constants/trails';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
-import { Colors } from '../../constants/colors';
+import { Colors, resolvePalette } from '../../constants/colors';
 
 // Extend RideData locally to include optional routeDistances if the active hook version omits it
 type RideData = BaseRideData & { routeDistances?: Record<string, number> };
@@ -15,7 +15,7 @@ const RideStatsScreen = () => {
   const [rides, setRides] = useState<RideData[]>([]);
   const navigation = useNavigation<any>();
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme || 'light'];
+  const theme = resolvePalette(colorScheme);
 
   useEffect(() => {
     (async () => {
@@ -54,7 +54,7 @@ const RideStatsScreen = () => {
               onPress={() => navigation.navigate('RideDetail', { startTime: ride.startTime })}
             >
               <RideStatsCard
-                title={`Ride #${rides.length - i}`}
+                title={`Ride #${rides.length - i}${ride.horseName ? ' • ' + ride.horseName : ''}`}
                 distance={ride.totalDistance}
                 elevation={ride.elevationGain}
                 durationMs={ride.duration}

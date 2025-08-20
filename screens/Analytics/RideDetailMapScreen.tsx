@@ -56,7 +56,10 @@ const RideDetailMapScreen = () => {
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
           <Text style={styles.backTxt}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Ride on {new Date(ride.startTime).toLocaleString()}</Text>
+        <Text style={styles.title}>
+          Ride on {new Date(ride.startTime).toLocaleString()}
+          {ride.horseName ? ` • ${ride.horseName}` : ''}
+        </Text>
       </View>
     </View>
   );

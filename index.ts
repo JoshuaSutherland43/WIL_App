@@ -1,5 +1,6 @@
 import { registerRootComponent } from 'expo';
-
+// Ensure Firestore side-effect registration & initialization occurs before app mounts
+import './services/FirebaseFirestoreService';
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

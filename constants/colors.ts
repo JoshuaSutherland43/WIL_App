@@ -101,3 +101,9 @@ export const Colors = {
     profileStatPointsCircle: '#BF83FF',
   },
 };
+
+// Safe palette resolver to avoid undefined theme crashes
+export function resolvePalette(scheme: string | null | undefined) {
+  const key = (scheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
+  return (Colors as any)[key] || Colors.light;
+}
