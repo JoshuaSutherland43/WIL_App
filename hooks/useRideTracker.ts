@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import type { LocationObject, LocationSubscription } from 'expo-location';
 import haversine from 'haversine';
 import { primaryPreviewRoutes } from '../constants/trails';
+import { getActiveHorse } from '../services/HorseStorage';
 
 export type RidePoint = {
   latitude: number;
@@ -18,6 +19,8 @@ export type RideData = {
   elevationGain: number; // meters
   duration: number; // ms
   routeDistances?: Record<string, number>; // meters per predefined route id
+  horseId?: string | null;
+  horseName?: string | null;
 };
 
 export default function useRideTracker() {
@@ -34,6 +37,8 @@ export default function useRideTracker() {
     if (status !== 'granted') throw new Error('Location permission denied');
 
     const startTime = Date.now();
+    // Capture the active horse at the start of the ride
+    const activeHorse = await getActiveHorse();
     const path: RidePoint[] = [];
     let totalDistance = 0;
     let elevationGain = 0;
@@ -115,6 +120,8 @@ export default function useRideTracker() {
             elevationGain,
             duration: Date.now() - startTime,
             routeDistances: merged,
+            horseId: activeHorse?.id ?? null,
+            horseName: activeHorse?.name ?? null,
           };
         });
       }

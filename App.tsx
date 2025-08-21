@@ -1,20 +1,24 @@
-import React, { Suspense } from 'react';
+import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './navigation/AppNavigator';
-// IMPORTANT: Lazily import AuthNavigator to avoid initializing Firebase during app boot
-const AuthNavigator = React.lazy(() => import('./navigation/AuthNavigator'));
+import AuthNavigator from './navigation/AuthNavigator';
+import useFirebaseAuth from './hooks/useFirebaseAuth';
+import { FIREBASE_ENABLED } from './services/FirebaseAuthService';
 
 export default function App() {
-  const isLoggedIn = true;
+  const { user, initializing, isAuthenticated } = useFirebaseAuth();
+  const allowBypass = !FIREBASE_ENABLED; // allow full app if firebase not configured
+  if (initializing) {
+    return (
+      <View style={{ flex:1, justifyContent:'center', alignItems:'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
   return (
     <NavigationContainer>
-      {isLoggedIn ? (
-        <AppNavigator />
-      ) : (
-        <Suspense fallback={null}>
-          <AuthNavigator />
-        </Suspense>
-      )}
+  {isAuthenticated || allowBypass ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }

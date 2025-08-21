@@ -188,7 +188,10 @@ export default function ProfileScreen() {
               >
                 <View>
                   <Text style={styles.historyItemTitle}>Ride #{idx + 1}</Text>
-                  <Text style={styles.historyItemSub}>{new Date(r.startTime).toLocaleString()}</Text>
+                  <Text style={styles.historyItemSub}>
+                    {new Date(r.startTime).toLocaleString()}
+                    {r.horseName ? ` • ${r.horseName}` : ''}
+                  </Text>
                 </View>
                 <Text style={styles.historyItemStat}>{(r.totalDistance / 1000).toFixed(1)} km</Text>
               </TouchableOpacity>
