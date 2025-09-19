@@ -38,9 +38,9 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # Step 6: Upload Snyk Report using v3
+      # Step 6: Upload Snyk Report using v4
       - name: Upload Snyk Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snyk-report
           path: snyk-report.txt
