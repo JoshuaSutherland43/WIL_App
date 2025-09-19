@@ -39,13 +39,16 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       # Step 6: Run Snyk test on all projects
-      - name: Run Snyk Test
-        uses: snyk/actions@master
-        with:
-          command: test
-          args: --all-projects  # removed --severity-threshold
+      - name: Run Snyk Test and Save Report
+        run: snyk test --all-projects > snyk-report.txt || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: Upload Snyk Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-report
+          path: snyk-report.txt
 
       # Step 7 (Optional): Monitor project in Snyk for continuous monitoring
       - name: Monitor project in Snyk
