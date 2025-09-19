@@ -16,11 +16,11 @@ jobs:
     steps:
       # Step 1: Checkout your repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Step 2: Set up Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
 
@@ -32,20 +32,15 @@ jobs:
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      # Step 5: Authenticate Snyk
-      - name: Authenticate Snyk
-        run: snyk auth $SNYK_TOKEN
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-      # Step 6: Run Snyk test on all projects
-      - name: Run Snyk Test and Save Report
+      # Step 5: Run Snyk Test and Save Report (workflow never fails)
+      - name: Run Snyk Test
         run: snyk test --all-projects > snyk-report.txt || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      
+
+      # Step 6: Upload Snyk Report using v3
       - name: Upload Snyk Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: snyk-report
           path: snyk-report.txt
