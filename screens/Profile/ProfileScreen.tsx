@@ -11,6 +11,8 @@ import type { RideData } from '../../hooks/useRideTracker';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { FIREBASE_ENABLED, auth } from '../../services/FirebaseAuthService';
+import { firestore } from '../../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
 
@@ -34,6 +36,7 @@ export default function ProfileScreen() {
     { label: 'Points', value: '0', boxColor: colors.profileStatPointsBox, circleColor: colors.profileStatPointsCircle, icon: 'star' },
   ]);
   const [recentRides, setRecentRides] = useState<RideData[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const displayName = FIREBASE_ENABLED && auth?.currentUser?.displayName
     ? auth?.currentUser?.displayName
     : 'Rider';
@@ -62,6 +65,20 @@ export default function ProfileScreen() {
       } catch (e) {
         // keep defaults on error
       }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!FIREBASE_ENABLED || !auth?.currentUser || !firestore) return;
+        const ref = doc(firestore, 'users', auth.currentUser.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data: any = snap.data();
+          setIsAdmin(data.role === 'admin' && data.status === 'approved');
+        }
+      } catch {}
     })();
   }, []);
 
@@ -142,6 +159,18 @@ export default function ProfileScreen() {
         keyExtractor={(_, i) => i.toString()}
         renderItem={renderAchievement}
       />
+
+      {isAdmin && (
+        <TouchableOpacity
+          style={[styles.addHorseBtn, { backgroundColor: '#1f2937' }]}
+          activeOpacity={0.85}
+          onPress={() => handleNavigate('AdminManagement')}
+          disabled={navDisabled}
+        >
+          <Icon name="shield" size={18} color="#fff" />
+          <Text style={styles.addHorseTxt}>Admin Panel</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.addHorseBtn}

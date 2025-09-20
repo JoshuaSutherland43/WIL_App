@@ -58,6 +58,8 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
 			photoURL: user.photoURL || undefined,
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
+			role: 'user',
+			status: 'pending',
 			totalRides: 0,
 			totalDistanceM: 0,
 			totalDurationMs: 0,
@@ -66,6 +68,49 @@ export async function getOrCreateUserProfile(user: User): Promise<UserProfile> {
 		await setDoc(userRef, newUserProfile);
 		return newUserProfile;
 	}
+}
+
+// ---------- Admin/User Management Helpers ---------- //
+
+/**
+ * Fetches user profiles with optional status filtering and basic pagination.
+ */
+export async function listUserProfiles(options?: { status?: UserProfile['status']; limit?: number }): Promise<UserProfile[]> {
+	if (!FIREBASE_ENABLED || !app) return [];
+	const db = getFirestore(app);
+	let q: Query = fsQuery(collection(db, 'users'));
+	if (options?.status) {
+		q = fsQuery(collection(db, 'users'), fsWhere('status', '==', options.status));
+	}
+	const lim = options?.limit ?? 100;
+	q = fsQuery(collection(db, 'users'), fsOrderBy('createdAt', 'desc'), fsLimit(lim));
+	const snap = await getDocs(q);
+	const res: UserProfile[] = [];
+	snap.forEach((d) => {
+		const data = d.data();
+		res.push({
+			uid: d.id,
+			displayName: (data as any).displayName,
+			email: (data as any).email,
+			photoURL: (data as any).photoURL,
+			createdAt: (data as any).createdAt,
+			updatedAt: (data as any).updatedAt,
+			role: (data as any).role,
+			status: (data as any).status,
+			totalRides: (data as any).totalRides || 0,
+			totalDistanceM: (data as any).totalDistanceM || 0,
+			totalDurationMs: (data as any).totalDurationMs || 0,
+			points: (data as any).points || 0,
+		});
+	});
+	return res;
+}
+
+export async function setUserApproval(userId: string, status: NonNullable<UserProfile['status']>) {
+	if (!FIREBASE_ENABLED || !app) return;
+	const db = getFirestore(app);
+	const ref = doc(db, 'users', userId);
+	await setDoc(ref, { status, updatedAt: Date.now() } as any, { merge: true });
 }
 
 // ---------- Core Primitive Types ---------- //
@@ -82,6 +127,8 @@ export interface UserProfile {
 	photoURL?: string;
 	createdAt: TimestampMs;
 	updatedAt: TimestampMs;
+	role?: 'user' | 'admin';
+	status?: 'pending' | 'approved' | 'rejected';
 	// Aggregate ride stats (denormalized for fast profile display)
 	totalRides: number;
 	totalDistanceM: number; // meters
@@ -296,6 +343,8 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
 			photoURL: data.photoURL,
 			createdAt: data.createdAt,
 			updatedAt: data.updatedAt,
+			role: data.role,
+			status: data.status,
 			totalRides: data.totalRides || 0,
 			totalDistanceM: data.totalDistanceM || 0,
 			totalDurationMs: data.totalDurationMs || 0,

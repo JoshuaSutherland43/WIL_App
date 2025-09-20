@@ -38,6 +38,12 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
         case 'auth/too-many-requests':
           setError('Too many attempts. Try again later.');
           break;
+        case 'auth/pending-approval':
+          setError('Your account is pending admin approval. You will be able to use the app once approved.');
+          break;
+        case 'auth/rejected':
+          setError('Your account has been rejected. Please contact support if you believe this is a mistake.');
+          break;
         default:
           setError('An unexpected error occurred. Please try again.');
       }
@@ -49,6 +55,12 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.white }]}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <AuthHeader activeTab="Login" onTabPress={() => navigation.navigate('Register')} />
+
+        <View style={[styles.infoBanner, { backgroundColor: colors.lightGrey }]}> 
+          <Text style={[styles.infoText, { color: colors.darkGrey }]}>
+            New accounts require admin approval. After registering, you must be approved before you can use the app.
+          </Text>
+        </View>
 
         <AuthInput
           label="Your Email"
@@ -109,6 +121,8 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContainer: { padding: 20 },
+  infoBanner: { padding: 12, borderRadius: 8, marginBottom: 16 },
+  infoText: { fontSize: 12 },
   forgotPasswordContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
